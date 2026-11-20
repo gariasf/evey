@@ -14,6 +14,10 @@ _Avoid_: device, screen, display, kiosk
 Where recipes, the pantry, leftovers and plans are edited, from a phone or a computer.
 _Avoid_: admin, dashboard, web app
 
+**Server**:
+What renders the terminal's frames, runs sessions and the conductor, and serves the backoffice.
+_Avoid_: backend, hub
+
 ### Recipes
 
 **Recipe**:
