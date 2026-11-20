@@ -21,6 +21,7 @@ The owner coordinates what is worked on. Agents implement, commit, open PRs and 
 - **Remove barriers to cooking.** A feature earns its place by making it easier to decide, shop, cook, or eat through the week with wet hands and a busy head. The evidence behind the terminal's design is in `docs/research/ux-cooking-research.md`.
 - **Ask for no discipline.** The owner has to want to use evey. Every input it asks for costs something every week, so prefer what it can infer from actions already taken, defaults that age out safely, and one-press confirmations. Skipping an input never breaks anything.
 - **The terminal is real hardware.** A change to what the terminal shows isn't done until it has been checked at the panel's native resolution, in 1-bit.
+- **Three keys, nothing to type.** The terminal runs on Move, Grid and Next plus a buzzer, from a 7.5″ panel up; choosing, shopping and editing happen on the phone (ADR 0002).
 - **No throwaway code.** The one exception is a prototype ticket's branch, which is never merged (`docs/agents/workflow.md`, Tickets).
 - **Goals are explicit.** Work traces to a ticket in the live milestone.
 
