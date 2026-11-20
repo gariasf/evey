@@ -4,3 +4,7 @@ node_modules/
 .claude/settings.local.json
 .DS_Store
 Thumbs.db
+
+# Prototype: generated from the private corpus, never committed (ADR 0001)
+prototype/device-ui/data.js
+prototype/device-ui/renders/

@@ -1,0 +1,1026 @@
+<!doctype html>
+<!--
+PROTOTYPE · throwaway. Not production code. No tests, no persistence, state lives in memory.
+
+Question: what should the evey kitchen device be?
+Three structurally different answers on one page, switchable via ?variant=A|B|C
+(floating bar at the bottom, or the left/right arrow keys):
+
+  A "Sheet"  the recipe as a map: the process grid stays on screen, 4 soft keys under the glass
+  B "Card"   one step per screen in type you can read across the kitchen, one knob
+  C "Board"  one lane per dish for a batch session, a bump key under each lane
+
+All three share the same in-memory state (pantry, leftovers, weekend plan, cook session), so you can
+flip variants at the same moment in a recipe. Sizes are physical: 1rem = 10 mm of simulated device.
+
+Run: double-click this file. Data: data.js (regenerate with make-data.js).
+Other params: size, scale=true&ppmm=…, speed=60, fx=0 (no e-paper lag), go=k4,k4,t10 (replay inputs), measure=1.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evey · device UI prototype (throwaway)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --f-text:"Atkinson Hyperlegible Next","Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --f-cond:"Barlow Condensed","Arial Narrow","Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{font-size:40px} /* 1rem = 10 mm of simulated device; JS rescales this */
+body{margin:0;background:#1d1f23;color:#e6e8eb;font:14px/1.45 system-ui,"Segoe UI",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+button,select,input{font:inherit;color:inherit}
+
+/* ================= lab chrome (px; not part of the design being judged) ================= */
+.lab-top{flex:none;display:flex;gap:10px 20px;align-items:center;flex-wrap:wrap;padding:9px 16px;background:#16181b;border-bottom:1px solid #33373d}
+.lab-top h1{margin:0;font-size:15px;font-weight:650;white-space:nowrap}
+.lab-top .tag{font-size:11px;font-weight:700;letter-spacing:.08em;background:#e0b341;color:#16181b;border-radius:3px;padding:2px 6px;margin-right:8px}
+.lab-top p{margin:0;color:#a9afb8;font-size:12.5px;flex:1 1 300px;min-width:220px}
+.ctl{display:flex;gap:6px;align-items:center;font-size:12.5px;color:#a9afb8;white-space:nowrap}
+.ctl select,.ctl button{background:#262a2f;border:1px solid #454b53;border-radius:5px;padding:4px 9px;color:#e6e8eb;cursor:pointer}
+.ctl button[aria-pressed="true"]{background:#e6e8eb;color:#16181b;border-color:#e6e8eb}
+.lab{flex:1;min-height:0;display:flex}
+.stage{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:auto;padding:18px 18px 76px;position:relative}
+.cal{display:none;margin-bottom:16px;background:#16181b;border:1px solid #33373d;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#a9afb8;align-items:center;gap:14px;flex:none}
+.cal.on{display:flex}
+.cal .bar{width:8.56rem;height:14px;background:#e0b341;border-radius:2px;flex:none}
+.lab-side{flex:none;width:348px;overflow:auto;background:#16181b;border-left:1px solid #33373d;padding:14px 16px 90px;font-size:12.5px;color:#c9ced6}
+.lab-side h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8d949e;margin:18px 0 6px;font-weight:650}
+.lab-side h2:first-child{margin-top:0}
+.lab-side p{margin:0 0 6px}
+.lab-side table{border-collapse:collapse;width:100%}
+.lab-side td{padding:2px 6px 2px 0;vertical-align:top;border-bottom:1px solid #26292e}
+.lab-side td:last-child{text-align:right;color:#e6e8eb;white-space:nowrap}
+.lab-side dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.lab-side dt{color:#8d949e}
+.lab-side dd{margin:0;color:#e6e8eb;font-family:Consolas,monospace;font-size:12px;word-break:break-word}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chips button{background:#22252a;border:1px solid #3c4148;border-radius:99px;padding:1px 8px;font-size:11.5px;color:#8d949e;cursor:pointer}
+.chips button.on{background:#dfe3e8;color:#16181b;border-color:#dfe3e8}
+.pre{display:flex;gap:6px;margin-bottom:8px}
+.pre button{background:#262a2f;border:1px solid #454b53;border-radius:5px;padding:3px 8px;font-size:12px;color:#e6e8eb;cursor:pointer}
+.sw{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:4px;background:#f1c84b;color:#16181b;border-radius:99px;padding:5px 6px;box-shadow:0 6px 24px rgba(0,0,0,.55);font-size:14px;font-weight:650}
+.sw button{width:34px;height:34px;border-radius:50%;border:none;background:#16181b;color:#f1c84b;font-size:16px;cursor:pointer}
+.sw span{min-width:220px;text-align:center;padding:0 8px}
+#measure{white-space:pre-wrap;font:12px Consolas,monospace;padding:20px;color:#e6e8eb}
+body.panel{background:#fff}
+body.panel .lab-top,body.panel .lab-side,body.panel .sw,body.panel .cal,body.panel .keys,body.panel .dev-side{display:none}
+body.panel .stage{padding:0;align-items:flex-start;justify-content:flex-start;overflow:visible}
+body.panel .dev{padding:0;border-radius:0;box-shadow:none;background:none}
+body.panel .eink{box-shadow:none;filter:grayscale(1) contrast(40)}
+
+/* ================= device body (rem = cm) ================= */
+.dev{display:inline-flex;flex-direction:column;background:#e9e7e1;border-radius:.7rem;padding:.9rem .9rem .55rem;box-shadow:0 .3rem 1.2rem rgba(0,0,0,.55),inset 0 0 0 .04rem #c9c6bd;flex:none}
+.dev.has-knob{flex-direction:row;padding:.9rem .5rem .9rem .9rem}
+.keys{display:grid;margin-top:.4rem;height:1.25rem;align-items:center}
+.keys.soft4{grid-template-columns:1fr 1fr 1fr 2fr}
+.keys.bump5{grid-template-columns:repeat(4,1fr) .55fr}
+.key{justify-self:center;width:70%;height:1.02rem;border:none;border-radius:.3rem;background:#33363b;box-shadow:0 .09rem 0 #17191b,inset 0 .03rem 0 #555a62;color:#9da2a9;font:600 .3rem/1 var(--f-cond);letter-spacing:.06em;cursor:pointer;padding:0}
+.key:active{transform:translateY(.06rem);box-shadow:0 .03rem 0 #17191b}
+.key.pri{background:#c2512f;color:#f6d9cf}
+.dev-side{width:3.2rem;margin-left:.45rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;flex:none}
+.knob{width:2.6rem;height:2.6rem;border-radius:50%;border:none;background:radial-gradient(circle at 35% 30%,#5a5f67,#2b2e33 70%);box-shadow:0 .12rem .3rem rgba(0,0,0,.5),inset 0 0 0 .12rem #3a3e44;position:relative;cursor:pointer;transform:rotate(var(--rot,0deg));transition:transform .12s;padding:0}
+.knob::after{content:"";position:absolute;left:50%;top:.22rem;width:.12rem;height:.55rem;margin-left:-.06rem;background:#e9e7e1;border-radius:.06rem}
+.turns{display:flex;gap:.2rem}
+.mini{min-width:1rem;height:.75rem;border:none;border-radius:.2rem;background:#33363b;color:#cfd2d7;font:600 .34rem/1 var(--f-cond);cursor:pointer;box-shadow:0 .07rem 0 #17191b;padding:0 .2rem}
+.dev-side .hint{font:500 .25rem/1.25 var(--f-cond);color:#77736a;text-align:center;letter-spacing:.04em;text-transform:uppercase}
+
+/* ================= e-paper screen: ink and paper only ================= */
+.eink{--ink:#17191b;--paper:#e4e2da;width:calc(var(--w)*1rem);height:calc(var(--h)*1rem);background:var(--paper);color:var(--ink);overflow:hidden;position:relative;font-family:var(--f-text);font-size:.36rem;line-height:1.2;box-shadow:inset 0 0 0 .03rem #a9a69c;flex:none;font-variant-numeric:tabular-nums}
+.eink.flash{background:var(--ink)}
+.eink.flash>*{filter:invert(1)}
+.eink h2,.eink h3,.eink p,.eink ol{margin:0}
+.ic{width:1em;height:1em;vertical-align:-.14em;flex:none}
+.inv{background:var(--ink);color:var(--paper)}
+.h{font:600 .3rem/1 var(--f-cond);letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;gap:.2rem;padding-bottom:.1rem;border-bottom:.03rem solid currentColor;margin-bottom:.12rem}
+.pill{font:600 .26rem/1 var(--f-cond);font-style:normal;letter-spacing:.08em;text-transform:uppercase;border:.03rem solid currentColor;padding:.05rem .12rem;white-space:nowrap;display:inline-block;align-self:flex-start}
+.pill.p3{background:var(--ink);color:var(--paper)}
+.pill.p1{border-style:dashed}
+.pips{display:inline-flex;gap:.05rem;vertical-align:middle}
+.pips i{width:.2rem;height:.2rem;border:.03rem solid currentColor}
+.pips i.on{background:currentColor}
+.mut{font-size:.3rem;font-style:italic}
+.batt{display:inline-block;width:.62rem;height:.3rem;border:.04rem solid var(--ink);position:relative;margin-left:.3rem}
+.batt::after{content:"";position:absolute;right:-.1rem;top:.06rem;width:.06rem;height:.1rem;background:var(--ink)}
+.batt i{position:absolute;inset:.04rem 25% .04rem .04rem;background:var(--ink)}
+.brand{font:700 .4rem/1 var(--f-cond);letter-spacing:.2em}
+.qr{width:1.7rem;height:1.7rem;fill:var(--ink);flex:none}
+.ins{display:flex;flex-wrap:wrap;gap:.03rem .4rem}
+.in{white-space:nowrap}
+.in b{font-family:var(--f-mono);font-weight:600}
+.in em{font-style:italic;font-size:.82em}
+.chip{display:inline-flex;align-items:center;gap:.08rem;border:.035rem solid var(--ink);padding:.06rem .14rem;font:600 .34rem/1 var(--f-cond);letter-spacing:.02em;white-space:nowrap}
+.chip.ring{background:var(--ink);color:var(--paper)}
+
+/* process grid (Cooking for Engineers notation); em-based so one font-size scales it */
+.gridwrap{position:absolute;inset:.08rem;overflow:hidden}
+.g{border-collapse:collapse;width:100%;height:100%;font-size:var(--gf,.34rem);line-height:1.1}
+.g td{border:.06em solid var(--ink);padding:.16em .3em;vertical-align:middle}
+.g .g-ing{white-space:nowrap;width:1%}
+.g .g-ing b{font-family:var(--f-mono);font-weight:600;font-size:.9em}
+.g .g-ing em{font-style:italic;font-size:.8em}
+.g .g-fill{padding:0;min-width:.5em;border:none;background:linear-gradient(var(--ink),var(--ink)) center/100% .06em no-repeat}
+.g .g-step{min-width:5em;font-family:var(--f-cond);font-weight:500;font-size:1.14em;line-height:1.04}
+.g .g-step i{font:600 .68em/1 var(--f-mono);font-style:normal;margin-right:.35em;border:.08em solid currentColor;padding:0 .22em;border-radius:.2em}
+.g .g-step u{text-decoration:none;font:500 .74em/1 var(--f-mono);white-space:nowrap;margin-left:.2em}
+.g .g-root{border-width:.2em}
+.g .g-step.s-done{background-image:repeating-linear-gradient(135deg,var(--ink) 0 .04em,transparent .04em .5em)}
+.g .g-ing.s-done,.g .g-ing.s-run,.g .g-ing.s-ring,.g .g-ing.s-busy,.g .g-ing.s-wait{text-decoration:line-through;text-decoration-thickness:.09em}
+.g .g-step.s-cur,.g .g-step.s-ring{background:var(--ink);color:var(--paper);font-weight:700}
+.g .g-ing.s-cur{font-weight:700;box-shadow:inset .32em 0 0 var(--ink);padding-left:.62em}
+.g .g-step.s-run,.g .g-step.s-busy,.g .g-step.s-wait{box-shadow:inset 0 0 0 .2em var(--ink);font-weight:700}
+
+/* ================= A · Sheet ================= */
+.A{height:100%;display:flex;flex-direction:column}
+.A-head{flex:none;height:.9rem;display:flex;align-items:center;gap:.35rem;padding:0 .3rem;border-bottom:.04rem solid var(--ink);font-size:.36rem;white-space:nowrap;overflow:hidden}
+.A-head .ttl{font:700 .52rem/1 var(--f-cond);letter-spacing:.03em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis}
+.A-head .sp{flex:1}
+.A-leg{flex:none;height:.9rem;display:grid;grid-template-columns:1fr 1fr 1fr 2fr;border-top:.04rem solid var(--ink)}
+.A-leg span{display:flex;align-items:center;justify-content:center;gap:.1rem;font:600 .36rem/1 var(--f-cond);letter-spacing:.05em;text-transform:uppercase;border-left:.03rem solid var(--ink);padding:0 .1rem;overflow:hidden;white-space:nowrap}
+.A-leg span:first-child{border-left:none}
+.A-leg .pri{background:var(--ink);color:var(--paper);font-size:.46rem;font-weight:700}
+.A-leg .pri.off{background:none}
+.A-cols{flex:1;min-height:0;display:grid;grid-template-columns:1.05fr 1.2fr 1fr}
+.A-cols>section{padding:.25rem .3rem;border-left:.03rem solid var(--ink);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.A-cols>section:first-child{border-left:none}
+.A-lf{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:.2rem;row-gap:.05rem;padding:.11rem .16rem;border:.03rem solid var(--ink);margin:.05rem 0}
+.A-lf b{font:700 .45rem/1.05 var(--f-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.A-lf .n{font-size:.29rem;display:flex;align-items:center;gap:.12rem}
+.A-lf .by{grid-column:2;grid-row:1/span 2;align-self:center;font:700 .38rem/1 var(--f-cond);text-transform:uppercase;text-align:right}
+.A-lf.urgent{background:var(--ink);color:var(--paper)}
+.A-lf.sel{box-shadow:0 0 0 .07rem var(--paper),0 0 0 .16rem var(--ink)}
+.A-rc{display:flex;align-items:baseline;gap:.15rem;padding:.085rem 0;border-bottom:.02rem solid var(--ink)}
+.A-rc b{font:600 .4rem/1.1 var(--f-text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.A-rc span{font:500 .32rem/1 var(--f-cond);white-space:nowrap}
+.A-rc.near b{font-weight:400}
+.A-plan{padding-left:.55rem;font:600 .4rem/1.3 var(--f-text)}
+.A-sum{font-size:.34rem;margin-top:.15rem}
+.A-sum b{font:700 .5rem/1.2 var(--f-cond)}
+.A-qr{margin-top:auto;display:flex;align-items:flex-end;gap:.2rem;font:500 .3rem/1.2 var(--f-cond);letter-spacing:.04em;text-transform:uppercase}
+.A-pick{flex:1;min-height:0;display:grid;grid-template-columns:1.55fr 1fr}
+.A-list{overflow:hidden}
+.A-row{display:grid;grid-template-columns:.55rem auto minmax(0,1fr) auto;align-items:center;column-gap:.2rem;height:.94rem;padding:0 .25rem;border-bottom:.02rem solid var(--ink)}
+.A-row b{font:600 .44rem/1 var(--f-text);white-space:nowrap}
+.A-row .en{font-size:.3rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.A-row .t{font:500 .32rem/1 var(--f-cond);white-space:nowrap}
+.A-row .stt{font:700 .38rem/1 var(--f-cond);text-align:center}
+.A-row.sel{background:var(--ink);color:var(--paper)}
+.A-prev{border-left:.04rem solid var(--ink);padding:.3rem;display:flex;flex-direction:column;gap:.16rem;overflow:hidden;min-width:0}
+.A-prev h2{font:800 .68rem/1 var(--f-text)}
+.A-prev .en{font-size:.36rem}
+.A-prev .facts{font-size:.32rem}
+.box{border:.04rem solid var(--ink);padding:.14rem .2rem;font-size:.38rem}
+.A-rec{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 3.5rem}
+.A-rec .cell,.A-gw{position:relative;min-height:0;min-width:0}
+.A-rec aside{border-left:.04rem solid var(--ink);padding:.2rem .25rem;font-size:.34rem;overflow:hidden;display:flex;flex-direction:column;gap:.04rem}
+.A-rec aside .miss{font-weight:700}
+.A-cook{flex:1;min-height:0;display:flex;flex-direction:column}
+.A-gw{flex:1}
+.A-ban{flex:none;height:3.4rem;display:grid;grid-template-columns:minmax(0,1fr) auto;border-top:.06rem solid var(--ink)}
+.A-ban .main{padding:.14rem .3rem;display:flex;flex-direction:column;gap:.09rem;min-width:0;justify-content:center}
+.A-ban .lbl{font:600 .32rem/1 var(--f-cond);letter-spacing:.14em;text-transform:uppercase}
+.A-ban .txt{font:700 .85rem/1.04 var(--f-cond);max-height:1.8rem;overflow:hidden}
+.A-ban .ins{font-size:.44rem;max-height:1.1rem;overflow:hidden}
+.A-ban .then{font-size:.34rem;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.A-ban .tm{border-left:.04rem solid currentColor;min-width:3.3rem;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 .3rem;gap:.08rem}
+.A-ban .tm b{font:700 1.3rem/1 var(--f-cond);white-space:nowrap}
+.A-ban .tm span{font:600 .3rem/1 var(--f-cond);letter-spacing:.12em;text-transform:uppercase}
+.A-ban.ring{background:var(--ink);color:var(--paper)}
+.A-done{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr}
+.A-done>section{padding:.25rem .3rem;overflow:hidden}
+.A-done>section+section{border-left:.03rem solid var(--ink)}
+.A-used div{display:flex;gap:.2rem;align-items:center;font:600 .42rem/1 var(--f-text);padding:.1rem .12rem}
+.A-used .sel{background:var(--ink);color:var(--paper)}
+.cb{width:.34rem;height:.34rem;border:.045rem solid currentColor;flex:none;position:relative}
+.cb.on::after{content:"";position:absolute;inset:.05rem;background:currentColor}
+
+/* ================= B · Card ================= */
+.B{height:100%;display:flex;flex-direction:column;padding:calc(.3rem*var(--k)) calc(.5rem*var(--k));gap:calc(.14rem*var(--k))}
+.B.ring{background:var(--ink);color:var(--paper)}
+.B-top{flex:none;display:flex;justify-content:space-between;align-items:center;gap:.3rem;font:600 calc(.46rem*var(--k))/1 var(--f-cond);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;border-bottom:.035rem solid currentColor;padding-bottom:calc(.16rem*var(--k))}
+.B-top>span:first-child{overflow:hidden;text-overflow:ellipsis}
+.B-top small{font-size:.8em;font-weight:500}
+.B-dots{display:inline-flex;gap:calc(.07rem*var(--k));align-items:center}
+.B-dots i{width:calc(.22rem*var(--k));height:calc(.22rem*var(--k));border:.03rem solid currentColor;border-radius:50%}
+.B-dots i.on{background:currentColor}
+.B-dots i.at{border-radius:0;transform:scale(1.35)}
+.B-mid{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:calc(.16rem*var(--k));overflow:hidden}
+.B-lab{font:600 calc(.4rem*var(--k))/1 var(--f-cond);letter-spacing:.14em;text-transform:uppercase}
+.B-big{font:700 calc(1.3rem*var(--k))/1.02 var(--f-cond);max-height:calc(4.1rem*var(--k));overflow:hidden}
+.B-sub{font-size:calc(.56rem*var(--k));line-height:1.15;max-height:calc(2rem*var(--k));overflow:hidden}
+.B-sub.ins{gap:calc(.04rem*var(--k)) calc(.5rem*var(--k))}
+.B-note{font:600 calc(.48rem*var(--k))/1.1 var(--f-text);border:.04rem solid currentColor;padding:calc(.12rem*var(--k)) calc(.2rem*var(--k));align-self:flex-start}
+.B-row{display:flex;align-items:center;gap:calc(.5rem*var(--k));min-height:0}
+.B-row .B-count{font:700 calc(2.6rem*var(--k))/1 var(--f-cond);white-space:nowrap;flex:none}
+.B-row .B-big{font-size:calc(.8rem*var(--k))}
+.B-ings{column-count:3;column-gap:calc(.5rem*var(--k));font-size:.5rem;line-height:1.22;max-height:100%;overflow:hidden}
+.B-ings span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.B-ings b{font-family:var(--f-mono);font-weight:600}
+.B-bot{flex:none;display:flex;justify-content:space-between;gap:.3rem;font:500 calc(.38rem*var(--k))/1 var(--f-cond);letter-spacing:.05em;text-transform:uppercase;border-top:.035rem solid currentColor;padding-top:calc(.14rem*var(--k));white-space:nowrap}
+.B-bot>span:first-child{overflow:hidden;text-overflow:ellipsis}
+.B-chips{display:flex;gap:calc(.15rem*var(--k));flex:none;overflow:hidden}
+.B-chips .chip{font-size:calc(.36rem*var(--k))}
+
+/* ================= C · Board ================= */
+.C{height:100%;display:flex;flex-direction:column}
+.C-head{flex:none;height:calc(.9rem*var(--k));display:flex;align-items:center;gap:.3rem;padding:0 .25rem;border-bottom:.04rem solid var(--ink);font-size:calc(.36rem*var(--k));white-space:nowrap;overflow:hidden}
+.C-head .ttl{font:700 calc(.52rem*var(--k))/1 var(--f-cond);letter-spacing:.03em;text-transform:uppercase}
+.C-head .sp{flex:1}
+.C-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr) .55fr}
+.C-leg{flex:none;height:calc(1rem*var(--k));display:grid;grid-template-columns:repeat(4,1fr) .55fr;border-top:.04rem solid var(--ink)}
+.C-leg span{display:flex;align-items:center;justify-content:center;gap:.08rem;font:700 calc(.42rem*var(--k))/1 var(--f-cond);letter-spacing:.05em;text-transform:uppercase;border-left:.03rem solid var(--ink);padding:0 .08rem;overflow:hidden;white-space:nowrap}
+.C-leg span:first-child{border-left:none}
+.C-leg .pri{background:var(--ink);color:var(--paper)}
+.lane{border-left:.03rem solid var(--ink);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.lane:first-child{border-left:none}
+.lane .lh{flex:none;padding:calc(.14rem*var(--k)) .16rem;border-bottom:.03rem solid var(--ink);display:flex;flex-direction:column;gap:.06rem}
+.lane .lh b{font:700 calc(.5rem*var(--k))/1 var(--f-cond);letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lane .lh span{font:500 calc(.3rem*var(--k))/1 var(--f-cond);display:flex;align-items:center;gap:.1rem;white-space:nowrap}
+.lane.rec .lh{background:var(--ink);color:var(--paper)}
+.lane.rec{box-shadow:inset 0 0 0 .09rem var(--ink)}
+.lane .lb{flex:1;min-height:0;padding:calc(.16rem*var(--k)) .16rem;display:flex;flex-direction:column;gap:calc(.12rem*var(--k));overflow:hidden}
+.lane .tag{font:600 calc(.3rem*var(--k))/1 var(--f-cond);letter-spacing:.14em;text-transform:uppercase}
+.lane .txt{font:600 calc(.6rem*var(--k))/1.05 var(--f-cond);max-height:46%;overflow:hidden;flex:none}
+.lane .ins{font-size:calc(.36rem*var(--k));flex-direction:column;flex-wrap:nowrap;gap:.02rem;overflow:hidden;min-height:0}
+.lane .ins .in{white-space:normal}
+.lane .then{font-size:calc(.3rem*var(--k));font-style:italic;margin-top:auto}
+.lane .cd{font:700 calc(1.5rem*var(--k))/1 var(--f-cond);white-space:nowrap}
+.lane.ring{background:var(--ink);color:var(--paper)}
+.lane.ring .lh{border-color:var(--paper)}
+.lane.fin .lb{background-image:repeating-linear-gradient(135deg,var(--ink) 0 .014rem,transparent .014rem .12rem)}
+.lane.fin .lb>*{background:var(--paper);align-self:flex-start;padding:.03rem .08rem}
+.C-rail{border-left:.04rem solid var(--ink);padding:calc(.16rem*var(--k)) .12rem;display:flex;flex-direction:column;gap:calc(.14rem*var(--k));font:500 calc(.3rem*var(--k))/1.15 var(--f-cond);letter-spacing:.03em;text-transform:uppercase;overflow:hidden;min-width:0}
+.C-rail b{display:block;font:700 calc(.62rem*var(--k))/1 var(--f-cond);letter-spacing:0}
+.C-lf{border:.03rem solid var(--ink);padding:.08rem .1rem;display:flex;flex-direction:column;gap:.05rem}
+.C-lf b{font:700 calc(.44rem*var(--k))/1.05 var(--f-cond)}
+.C-day.today .lh{background:var(--ink);color:var(--paper)}
+.C-sum{flex:none;display:grid;grid-template-columns:1fr 1fr;border-top:.04rem solid var(--ink)}
+.C-sum>div{padding:calc(.16rem*var(--k)) .2rem;min-width:0}
+.C-sum>div+div{border-left:.03rem solid var(--ink)}
+.C-sum b{display:block;font:700 calc(.56rem*var(--k))/1.1 var(--f-cond)}
+.C-sum span{display:block;font-size:calc(.3rem*var(--k));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.C-tile .big{font:700 calc(.7rem*var(--k))/1 var(--f-cond)}
+.C-tile.on .lh{background:var(--ink);color:var(--paper)}
+.C-menu{flex:none;border-top:.04rem solid var(--ink);padding:.08rem .25rem;font:600 calc(.36rem*var(--k))/1 var(--f-cond);letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper)}
+</style>
+</head>
+<body>
+<header class="lab-top">
+  <h1><span class="tag">PROTOTYPE</span>evey · what should the kitchen device be?</h1>
+  <p>Three structurally different devices running the same recipes and the same cook session. Flip with ← → and judge them mid-recipe. Throwaway: nothing is saved.</p>
+  <div class="ctl">Size <select id="c-size"></select></div>
+  <div class="ctl">Scale <button id="c-fit">Fit</button><button id="c-true" title="Show the device at its real physical size">True size</button></div>
+  <div class="ctl">Clock <button id="c-s1">real</button><button id="c-s60" title="1 minute passes per second, to watch timers">×60</button></div>
+  <div class="ctl"><button id="c-fx" title="Simulate e-paper refresh lag and the full-refresh flash">e-paper lag</button><button id="c-reset">Reset</button></div>
+</header>
+<main class="lab">
+  <section class="stage" id="stage">
+    <div class="cal" id="cal"><span>Hold a bank card against the yellow bar and drag until the bar is exactly as wide (85.6 mm).</span><div class="bar"></div><input id="c-ppmm" type="range" min="2.4" max="9" step="0.01"></div>
+    <div class="dev" id="dev"></div>
+  </section>
+  <aside class="lab-side" id="side"></aside>
+</main>
+<nav class="sw" aria-label="Prototype variants"><button id="sw-prev" aria-label="Previous variant">←</button><span id="sw-label"></span><button id="sw-next" aria-label="Next variant">→</button></nav>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+const { R, ING, UT } = window.EVEY_DATA;
+const byDay = Object.fromEntries(R.map(r => [r.d, r]));
+const P = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const cap = k => k[0].toUpperCase() + k.slice(1);
+
+/* ---------- quantity formatting (lifted from japanese-batch-kitchen) ---------- */
+const FR = [[0.25, '¼'], [0.33, '⅓'], [0.5, '½'], [0.67, '⅔'], [0.75, '¾']];
+function fnum(x) {
+  const w = Math.floor(x + 1e-9), f = x - w;
+  if (f < 0.04) return String(w);
+  if (f > 0.96) return String(w + 1);
+  const hit = FR.find(([v]) => Math.abs(v - f) < 0.05);
+  return hit ? (w ? w : '') + hit[1] : String(Math.round(x * 10) / 10);
+}
+const UNIT = { clove: ['clove', 'cloves'], knob: ['knob', 'knobs'], slice: ['slice', 'slices'], can: ['can', 'cans'], pack: ['pack', 'packs'], bundle: ['bundle', 'bundles'], leaf: ['leaf', 'leaves'], sheet: ['sheet', 'sheets'], bag: ['bag', 'bags'], cube: ['cube', 'cubes'], cup: ['cup', 'cups'] };
+function qstr(q, u, m) {
+  if (q == null) return '';
+  const v = q * m;
+  if (u === 'g' || u === 'ml') return Math.round(v) + ' ' + u;
+  if (u === 'mlraw') return Math.round(v) + ' ml';
+  if (u === 'pc') return fnum(v);
+  if (UNIT[u]) return fnum(v) + ' ' + UNIT[u][v > 1 ? 1 : 0];
+  return fnum(v) + ' ' + u;
+}
+function mins(t) { if (!t) return ''; if (t >= 120) return Math.round(t / 60) + ' h'; if (t >= 60) return Math.floor(t / 60) + ' h' + (t % 60 ? ' ' + (t % 60) + ' min' : ''); return (Number.isInteger(t) ? t : Math.ceil(t)) + ' min'; }
+// The device needs short ingredient names; the dictionary keys happen to be good ones.
+const short = x => x[0] === 'rice' ? (x[2] === 'mlraw' ? 'Rice, raw' : 'Cooked rice') : cap(x[0]);
+
+/* ============================================================
+   MODEL (the part worth keeping): steps, pantry, leftovers, cook session
+   ============================================================ */
+const DAY = 864e5;
+const day0 = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return +d; })();
+const STAPLES = Object.keys(ING).filter(k => ING[k][3] === 1);
+const FRESH = Object.keys(ING).filter(k => ING[k][3] === 0);
+const PLAN0 = [100, 9, 22, 14, 37].filter(d => byDay[d]).map(d => ({ d, m: 1 }));
+
+// Which timed steps can you walk away from? Guessed from the wording here; the real model needs an explicit flag.
+const PASSIVE = /\b(marinat|rest|soak|rehydrat|chill|fridge|cool|steam|simmer|boil|poach|drain|cover|low \d|overnight|steep)/i;
+const HANDS = /\b(fry|sear|saut[ée]|grill|stirring|spooning|brush|flipping|roll back)/i;
+const isPassive = s => !!s[2] && s[2] >= 5 && PASSIVE.test(s[0]) && !HANDS.test(s[0]);
+const INFO = {};
+function info(r) {
+  if (INFO[r.d]) return INFO[r.d];
+  const hands = r.s.filter(s => s[2] && !isPassive(s)).reduce((a, s) => a + s[2], 0);
+  const untimed = r.s.filter(s => !s[2]).length || 1;
+  const each = clamp(Math.round(((r.t - hands) / untimed) * 2) / 2, 1, 8);
+  const parent = r.s.map(() => -1);
+  r.s.forEach((s, si) => s[1].forEach(x => { if (typeof x !== 'number') parent[+x.slice(1)] = si; }));
+  return INFO[r.d] = r.s.map((s, si) => ({ txt: s[0], min: s[2] || 0, passive: isPassive(s), est: s[2] || each, parent: parent[si] }));
+}
+const keepDays = r => { const n = r.k.match(/\d+/); return n ? +n[0] : /freez/i.test(r.k) ? 30 : 0; };
+const keepShort = r => r.k.split(/[;,]/)[0];
+const score = r => (r.p || 0) * 2 + ((r.u || []).includes('pot') && r.b === 3 ? 40 : 0) + r.t - (r.b === 1 ? 1000 : 0);
+
+function preset(name) {
+  if (name === 'shopped') return new Set([...STAPLES, ...PLAN0.flatMap(p => byDay[p.d].i.map(x => x[0])), 'eggs', 'onion', 'garlic', 'ginger', 'scallion', 'carrot', 'potato', 'butter', 'milk']);
+  if (name === 'bare') return new Set([...STAPLES.filter(k => !['miso', 'panko', 'sesame', 'nori', 'wakame'].includes(k)), 'eggs', 'onion', 'garlic']);
+  return new Set([...STAPLES, 'eggs', 'onion', 'garlic', 'ginger', 'carrot', 'potato', 'cabbage', 'tofu', 'scallion', 'chicken thigh', 'pork mince', 'butter', 'milk', 'bacon', 'cheese', 'bread', 'tuna', 'corn', 'cucumber', 'lemon', 'spinach', 'mushroom']);
+}
+
+const S = {
+  variant: 'A', size: '', scale: P.get('scale') === 'true' ? 'true' : 'fit', ppmm: +P.get('ppmm') || 96 / 25.4,
+  mode: 'idle', sel: 0, dish: PLAN0[0].d, mult: 1,
+  pantry: preset(P.get('pantry') || 'midweek'), pv: 0, plan: PLAN0, session: null, done: null,
+  leftovers: [
+    { id: 1, d: 100, left: 2, of: 6, by: day0 },
+    { id: 2, d: 7, left: 3, of: 4, by: day0 + DAY },
+    { id: 3, d: 37, left: 4, of: 6, by: day0 + 2 * DAY },
+    { id: 4, d: 22, left: 2, of: 4, by: day0 + 4 * DAY },
+  ].filter(l => byDay[l.d]).map(l => ({ ...l, name: byDay[l.d].n })),
+  ui: { A: { confirmEnd: false }, B: { card: 0, peek: 0, rot: 0 }, C: { page: 0, set: [], menu: false } },
+};
+
+/* simulated clock (timers only), so ×60 lets you watch a 10 minute simmer in 10 s */
+let SPEED = +P.get('speed') === 60 ? 60 : 1, realBase = Date.now(), simBase = Date.now();
+const now = () => simBase + (Date.now() - realBase) * SPEED;
+function setSpeed(x) { simBase = now(); realBase = Date.now(); SPEED = x; }
+
+/* pantry → what can be cooked ("crafting") */
+const NEED = {};
+function need(r) {
+  if (NEED[r.d]) return NEED[r.d];
+  const req = new Set(), opt = new Set();
+  r.i.forEach(x => { if (ING[x[0]][3] === 2) return; (x[1] == null && /garnish|topping|optional|to serve/i.test(x[3] || '') ? opt : req).add(x[0]); });
+  req.forEach(k => opt.delete(k));
+  return NEED[r.d] = { req: [...req], opt: [...opt] };
+}
+const craftOf = r => ({ r, miss: need(r).req.filter(k => !S.pantry.has(k)), optMiss: need(r).opt.filter(k => !S.pantry.has(k)) });
+let craftCache = null, craftPv = -1;
+function craft() {
+  if (craftPv !== S.pv) { craftCache = R.map(craftOf).sort((a, b) => a.miss.length - b.miss.length || b.r.b - a.r.b || a.r.t - b.r.t || a.r.d - b.r.d); craftPv = S.pv; }
+  return craftCache;
+}
+
+/* leftovers */
+const lfSorted = () => [...S.leftovers].sort((a, b) => a.by - b.by);
+const urgent = l => l.by - day0 < DAY;
+const dayN = ts => Math.max(0, Math.round((ts - day0) / DAY));
+const weekday = ts => new Date(ts).toLocaleDateString('en-GB', { weekday: 'long' });
+const byLabel = ts => { const n = dayN(ts); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 7 ? weekday(ts) : new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
+const planMins = () => Math.round(S.plan.reduce((s, p) => s + byDay[p.d].t * (1 + 0.3 * (p.m - 1)), 0) / 5) * 5;
+const toBuy = () => [...new Set(S.plan.flatMap(p => need(byDay[p.d]).req))].filter(k => ING[k][3] === 0 && !S.pantry.has(k));
+
+/* cook session: several dishes, each a step tree; a step is ready when the steps feeding it are done */
+const key = (d, si) => d + ':' + si;
+const stOf = (ss, d, si) => ss.st[key(d, si)] || 'todo';
+const multOf = (ss, d) => ss.dishes.find(x => x.d === d).m;
+const isReady = (ss, d, si) => stOf(ss, d, si) === 'todo' && byDay[d].s[si][1].every(x => typeof x === 'number' || stOf(ss, d, +x.slice(1)) === 'done');
+function startSession(list) {
+  const dishes = list.filter((x, i) => byDay[x.d] && list.findIndex(y => y.d === x.d) === i).map(x => ({ d: x.d, m: x.m || 1 })).sort((a, b) => score(byDay[b.d]) - score(byDay[a.d]));
+  if (!dishes.length) return;
+  S.session = { dishes, st: {}, timers: {}, fin: {}, hist: [], prefer: dishes[0].d, t0: now(), lanes: [0, 1, 2, 3].map(i => dishes[i] ? dishes[i].d : null), queue: dishes.slice(4).map(x => x.d) };
+  S.mode = 'cook'; S.ui.B.peek = 0; S.ui.C.menu = false;
+}
+// What this dish wants next: ring (timer went off) > busy (hands-on timer running) > do > wait (only passive timers left) > fin
+function dishNext(ss, d) {
+  const r = byDay[d], inf = info(r);
+  let ring = -1, busy = -1, wait = -1, waitEnd = Infinity, first = -1, starter = -1, starterMin = 0;
+  r.s.forEach((_, si) => {
+    const st = stOf(ss, d, si);
+    if (st === 'ring') { if (ring < 0) ring = si; }
+    else if (st === 'run') { if (!inf[si].passive) { if (busy < 0) busy = si; } else if (ss.timers[key(d, si)].end < waitEnd) { wait = si; waitEnd = ss.timers[key(d, si)].end; } }
+    else if (st === 'todo' && isReady(ss, d, si)) { if (first < 0) first = si; if (inf[si].passive && inf[si].min > starterMin) { starter = si; starterMin = inf[si].min; } }
+  });
+  if (ring >= 0) return { d, si: ring, kind: 'ring' };
+  if (busy >= 0) return { d, si: busy, kind: 'busy' };
+  if (starter >= 0) return { d, si: starter, kind: 'do', starter: starterMin };
+  if (first >= 0) return { d, si: first, kind: 'do' };
+  if (wait >= 0) return { d, si: wait, kind: 'wait' };
+  return { d, si: -1, kind: 'fin' };
+}
+// The conductor: one thing to do now across all dishes. Start the longest unattended wait first, then stay on the dish in hand.
+function conductor(ss, only) {
+  const ds = ss.dishes.map(x => x.d).filter(d => !ss.fin[d] && (!only || only.includes(d)));
+  const order = ds.includes(ss.prefer) ? [ss.prefer, ...ds.filter(d => d !== ss.prefer)] : ds;
+  const nx = order.map(d => dishNext(ss, d)), of = k => nx.filter(n => n.kind === k);
+  const ring = of('ring'); if (ring.length) return ring.find(n => !info(byDay[n.d])[n.si].passive) || ring[0];
+  const busy = of('busy'); if (busy.length) return busy[0];
+  const dos = of('do'), starters = dos.filter(n => n.starter).sort((a, b) => b.starter - a.starter);
+  if (starters.length) return starters[0];
+  if (dos.length) return dos[0];
+  const waits = of('wait').sort((a, b) => ss.timers[key(a.d, a.si)].end - ss.timers[key(b.d, b.si)].end);
+  if (waits.length) return waits[0];
+  return { d: order[0] ?? ss.dishes[0].d, si: -1, kind: 'fin' };
+}
+// The one action the device has: "I did that". Starts the timer if the step has one, otherwise marks it done.
+function act(d, si) {
+  const ss = S.session; if (!ss || si < 0) return;
+  ss.hist.push(JSON.stringify({ st: ss.st, timers: ss.timers, fin: ss.fin, prefer: ss.prefer, lanes: ss.lanes, queue: ss.queue, lo: S.leftovers }));
+  const k = key(d, si), st = stOf(ss, d, si), r = byDay[d], inf = info(r)[si];
+  let readyIn = 0;
+  if (st === 'todo' && inf.min) {
+    // A long unattended last step (marinate, chill) is storage, not cooking: the dish goes in the fridge now.
+    if (si === r.s.length - 1 && inf.passive && inf.min >= 30) { ss.st[k] = 'done'; readyIn = inf.min; }
+    else { ss.st[k] = 'run'; ss.timers[k] = { end: now() + inf.min * 60000 }; }
+  } else { ss.st[k] = 'done'; delete ss.timers[k]; }
+  ss.prefer = d;
+  if (!ss.fin[d] && r.s.every((_, i) => stOf(ss, d, i) === 'done')) {
+    const keep = keepDays(r), n = (parseInt(r.sv) || 2) * multOf(ss, d);
+    ss.fin[d] = { keep, n, readyIn };
+    if (keep > 0) S.leftovers.push({ id: Date.now() + d, d, name: r.n, left: n, of: n, by: day0 + keep * DAY, readyIn });
+    // Board: a finished dish frees its lane and the next queued dish slides in (like bumping a ticket).
+    const li = ss.lanes.indexOf(d);
+    if (li >= 0 && ss.queue.length) ss.lanes[li] = ss.queue.shift();
+  }
+  if (ss.dishes.every(x => ss.fin[x.d])) {
+    const used = [...new Set(ss.dishes.flatMap(x => byDay[x.d].i.map(i => i[0])))].filter(k2 => ING[k2][3] === 0 && S.pantry.has(k2));
+    S.done = { dishes: ss.dishes.map(x => ({ d: x.d, m: x.m, ...ss.fin[x.d] })), used, gone: [], sel: 0 };
+    S.session = null; S.mode = 'done';
+  }
+}
+function undo() {
+  const ss = S.session; if (!ss || !ss.hist.length) return false;
+  const h = JSON.parse(ss.hist.pop());
+  Object.assign(ss, { st: h.st, timers: h.timers, fin: h.fin, prefer: h.prefer, lanes: h.lanes, queue: h.queue }); S.leftovers = h.lo;
+  return true;
+}
+function otherDish() {
+  const ss = S.session, ds = ss.dishes.map(x => x.d).filter(d => !ss.fin[d] && dishNext(ss, d).kind === 'do');
+  if (ds.length) ss.prefer = ds[(ds.indexOf(conductor(ss).d) + 1) % ds.length];
+}
+const go = {
+  idle() { S.mode = 'idle'; S.sel = 0; },
+  fridge() { if (S.leftovers.length) { S.mode = 'fridge'; S.sel = 0; } },
+  pick() { S.mode = 'pick'; S.sel = 0; },
+  open(d) { S.mode = 'recipe'; S.dish = d; S.mult = 1; },
+  cook(list) { startSession(list); },
+  end() { S.session = null; go.idle(); },
+  ate(i) { const l = lfSorted()[i]; if (!l) return; if (--l.left <= 0) S.leftovers = S.leftovers.filter(x => x !== l); if (!S.leftovers.length) go.idle(); else S.sel = clamp(S.sel, 0, S.leftovers.length - 1); },
+  finish() { S.done.gone.forEach(k => S.pantry.delete(k)); S.pv++; S.done = null; go.idle(); },
+};
+function tlabel(ms) {
+  if (ms <= 0) return '0 s';
+  const s = Math.ceil(ms / 1000); if (s <= 60) return Math.ceil(s / 5) * 5 + ' s';
+  const m = Math.ceil(s / 60); return m >= 90 ? Math.round(m / 6) / 10 + ' h' : m + ' min';
+}
+const tleft = (ss, d, si) => { const t = ss.timers[key(d, si)]; return t ? tlabel(t.end - now()) : ''; };
+
+/* ============================================================
+   shared screen bits (icons, small components). Layouts are per variant.
+   ============================================================ */
+const IC = {
+  clock: '<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 4.3V8l2.6 1.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  play: '<svg class="ic" viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z" fill="currentColor"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 16 16"><path d="M2.5 8.6l3.6 3.6 7.4-8.2" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  up: '<svg class="ic" viewBox="0 0 16 16"><path d="M8 3l6.5 10h-13z" fill="currentColor"/></svg>',
+  down: '<svg class="ic" viewBox="0 0 16 16"><path d="M8 13L1.5 3h13z" fill="currentColor"/></svg>',
+};
+const fmtDate = () => new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtClock = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const pill = b => `<i class="pill p${b}">${['', 'cook fresh', 'batch ok', 'batch hero'][b]}</i>`;
+const pips = (n, of) => `<span class="pips">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(Math.max(0, of - n))}</span>`;
+const batt = '<span class="batt"><i></i></span>';
+const insHTML = (r, si, m) => r.s[si][1].map(x => {
+  if (typeof x !== 'number') return `<span class="in"><em>from step ${+x.slice(1) + 1}</em></span>`;
+  const i = r.i[x], q = qstr(i[1], i[2], m);
+  return `<span class="in">${q ? `<b>${esc(q)}</b> ` : ''}${esc(short(i))}${i[3] ? ` <em>${esc(i[3])}</em>` : ''}</span>`;
+}).join('');
+const chipsHTML = (ss, skip) => Object.keys(ss.timers).filter(k => k !== skip).sort((a, b) => ss.timers[a].end - ss.timers[b].end).slice(0, 3).map(k => {
+  const [d, si] = k.split(':').map(Number), ring = ss.st[k] === 'ring', nm = byDay[d].n;
+  return `<span class="chip${ring ? ' ring' : ''}">${IC.clock}${ring ? 'done' : tlabel(ss.timers[k].end - now())} · ${esc(nm.length > 14 ? nm.slice(0, 13) + '…' : nm)}</span>`;
+}).join('');
+function fakeQR(seed) {
+  const n = 21; let x = seed; const rnd = () => (x = (x * 9301 + 49297) % 233280) / 233280;
+  const fin = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+  let cells = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    let on;
+    if (fin(r, c)) { const rr = r < 7 ? r : r - (n - 7), cc = c < 7 ? c : c - (n - 7); on = rr === 0 || rr === 6 || cc === 0 || cc === 6 || (rr >= 2 && rr <= 4 && cc >= 2 && cc <= 4); }
+    else on = rnd() > 0.5;
+    if (on) cells += `<rect x="${c}" y="${r}" width="1.03" height="1.03"/>`;
+  }
+  return `<svg class="qr" viewBox="-1 -1 ${n + 2} ${n + 2}">${cells}</svg>`;
+}
+
+/* process grid, Cooking for Engineers notation (layout algorithm from japanese-batch-kitchen).
+   st(si) gives each step's state so the grid can show progress. */
+function gridHTML(r, m, st) {
+  const n = r.s.length, col = new Array(n), parent = new Array(n).fill(-1), ingParent = [];
+  r.s.forEach((s, si) => {
+    let c = 0;
+    s[1].forEach(x => { if (typeof x === 'number') ingParent[x] = si; else { const k = +x.slice(1); parent[k] = si; c = Math.max(c, col[k]); } });
+    col[si] = c + 1;
+  });
+  const root = n - 1, order = [], span = [];
+  (function dfs(si) {
+    let a = Infinity, b = -Infinity;
+    r.s[si][1].forEach(x => {
+      if (typeof x === 'number') { const row = order.length; order.push(x); a = Math.min(a, row); b = Math.max(b, row); }
+      else { const k = +x.slice(1); dfs(k); a = Math.min(a, span[k][0]); b = Math.max(b, span[k][1]); }
+    });
+    span[si] = [a, b];
+  })(root);
+  const sc = si => st ? st(si) : 'todo';
+  const rows = order.map(() => []);
+  order.forEach((ii, row) => {
+    const x = r.i[ii], q = qstr(x[1], x[2], m), note = x[3] && x[3].length <= 14 ? ` <em>${esc(x[3])}</em>` : '';
+    rows[row].push({ c: 0, cs: 1, rs: 1, cls: 'g-ing s-' + sc(ingParent[ii]), html: `${q ? `<b>${esc(q)}</b> ` : ''}${esc(short(x))}${note}` });
+    const pc = col[ingParent[ii]];
+    if (pc > 1) rows[row].push({ c: 1, cs: pc - 1, rs: 1, cls: 'g-fill', html: '' });
+  });
+  r.s.forEach((s, si) => {
+    const [a, b] = span[si], cs = si === root ? 1 : col[parent[si]] - col[si];
+    const tm = !s[2] ? '' : /\d\s*(min|h|s)\b/.test(s[0]) ? IC.clock : `${IC.clock}&#8239;${esc(mins(s[2]))}`;  // don't repeat a time the text already gives
+    rows[a].push({ c: col[si], cs, rs: b - a + 1, cls: 'g-step s-' + sc(si) + (si === root ? ' g-root' : ''), html: `<i>${si + 1}</i>${esc(s[0])}${tm ? `<u>${tm}</u>` : ''}` });
+  });
+  return `<table class="g"><tbody>${rows.map(rw => '<tr>' + rw.sort((p, q) => p.c - q.c).map(c =>
+    `<td class="${c.cls}"${c.rs > 1 ? ` rowspan="${c.rs}"` : ''}${c.cs > 1 ? ` colspan="${c.cs}"` : ''}>${c.html}</td>`).join('') + '</tr>').join('')}</tbody></table>`;
+}
+
+/* ============================================================
+   VARIANT A · SHEET: the recipe as a map. Four soft keys; the wide one is always "next".
+   ============================================================ */
+const A = {
+  key: 'A', name: 'Sheet', controls: 'soft4',
+  blurb: 'The recipe as a map. The whole process grid stays on screen and fills in as you cook; the box you are on is inverted and repeated large underneath. Four soft keys under the glass, labelled by the screen. The wide one is always the next thing to do.',
+  hw: '9.7 to 10.3 inch mono e-paper with fast 1-bit partial refresh, four keys on GPIO, LiPo, magnets on the back. 13.3 inch shown as the stretch option.',
+  type: [['Current step', 8.5], ['Quantities', 4.4], ['Grid text (auto-fits)', 3.4], ['Key legends', 3.6]],
+  help: '<b>1 2 3</b> small keys · <b>4</b> or <b>Space</b> the wide key',
+  sizes: { '9.7': { w: 203, h: 139, px: [1200, 825], label: '9.7″ · 203×139 mm' }, '13.3': { w: 270, h: 203, px: [1600, 1200], label: '13.3″ · 270×203 mm' } },
+  keys: { 1: 'k1', 2: 'k2', 3: 'k3', 4: 'k4', ' ': 'k4', Enter: 'k4' },
+  head: (l, r) => `<div class="A-head">${l}<span class="sp"></span>${r}</div>`,
+  leg: (a, b, c, d) => `<div class="A-leg">${[a, b, c].map(x => `<span>${x || ''}</span>`).join('')}<span class="pri${d ? '' : ' off'}">${d || ''}</span></div>`,
+  lf: (l, sel) => `<div class="A-lf${urgent(l) ? ' urgent' : ''}${sel ? ' sel' : ''}"><b>${esc(l.name)}</b><span class="n">${pips(l.left, l.of)} ${l.left} left${l.readyIn ? ' · ready in ' + mins(l.readyIn) : ''}</span><span class="by">${urgent(l) ? 'eat ' : ''}${byLabel(l.by)}</span></div>`,
+  render() { return ({ idle: A.idle, fridge: A.idle, pick: A.pick, recipe: A.recipe, cook: A.cook, done: A.done })[S.mode](); },
+  idle() {
+    const big = PROF.h > 150, lf = lfSorted(), cr = craft(), ready = cr.filter(c => !c.miss.length), near = cr.filter(c => c.miss.length === 1), buy = toBuy();
+    return `<div class="A">
+      ${A.head(`<span class="ttl">${fmtDate()}</span><span>${fmtClock()}</span>`, `<span class="brand">evey</span>${batt}`)}
+      <div class="A-cols">
+        <section><h3 class="h">In the fridge <span>${lf.length} dishes</span></h3>
+          ${lf.slice(0, big ? 9 : 5).map((l, i) => A.lf(l, S.mode === 'fridge' && S.sel === i)).join('') || '<p class="mut">Nothing stored.</p>'}</section>
+        <section><h3 class="h">Can cook now <span>${ready.length}</span></h3>
+          ${ready.slice(0, big ? 11 : 5).map(c => `<div class="A-rc"><b>${esc(c.r.n)}</b><span>${c.r.t} min</span>${pill(c.r.b)}</div>`).join('') || '<p class="mut">Nothing is complete with what is in the kitchen.</p>'}
+          <h3 class="h" style="margin-top:.22rem">One item away <span>${near.length}</span></h3>
+          ${near.slice(0, big ? 6 : 3).map(c => `<div class="A-rc near"><b>${esc(c.r.n)}</b><span>needs ${esc(c.miss[0])}</span></div>`).join('')}</section>
+        <section><h3 class="h">This weekend <span>${S.plan.length} dishes</span></h3>
+          <ol class="A-plan">${S.plan.map(p => `<li>${esc(byDay[p.d].n)}${p.m > 1 ? ' ×' + p.m : ''}</li>`).join('')}</ol>
+          <p class="A-sum"><b>${mins(planMins())}</b> hands-on<br>${buy.length ? buy.length + ' things still to buy' : 'Everything is bought'}</p>
+          <div class="A-qr">${fakeQR(7)}<span>Shopping list<br>on your phone</span></div></section>
+      </div>
+      ${S.mode === 'fridge' ? A.leg(IC.up, IC.down, 'Back', 'Ate one portion') : A.leg(lf.length ? 'Ate something' : '', 'Cook one dish', '', `${IC.play} Start weekend session`)}
+    </div>`;
+  },
+  pick() {
+    const cr = craft(), n = cr.length, per = Math.floor((PROF.h - 19) / 9.4), sel = clamp(S.sel, 0, n - 1), start = clamp(sel - (per >> 1), 0, Math.max(0, n - per)), c = cr[sel];
+    return `<div class="A">
+      ${A.head(`<span class="ttl">Cook one dish</span><span>${cr.filter(x => !x.miss.length).length} ready of ${n}</span>`, `<span>${sel + 1} / ${n}</span>`)}
+      <div class="A-pick">
+        <div class="A-list">${cr.slice(start, start + per).map((x, i) => `<div class="A-row${start + i === sel ? ' sel' : ''}"><span class="stt">${x.miss.length ? '−' + x.miss.length : IC.check}</span><b>${esc(x.r.n)}</b><span class="en">${esc(x.r.en)}</span><span class="t">${x.r.t} min</span></div>`).join('')}</div>
+        <div class="A-prev"><h2>${esc(c.r.n)}</h2><p class="en">${esc(c.r.en)}</p>
+          <p class="facts">${c.r.t} min hands-on${c.r.p ? ' · ' + mins(c.r.p) + ' waiting' : ''}<br>Keeps: ${esc(c.r.k)}</p>${pill(c.r.b)}
+          ${c.miss.length ? `<div class="box"><h3 class="h">Missing</h3>${c.miss.map(k => `<div>${esc(cap(k))}</div>`).join('')}</div>` : `<div class="box inv"><b>${IC.check} Everything is in the kitchen</b></div>`}
+          ${c.optMiss.length ? `<p class="mut">No ${c.optMiss.map(esc).join(', ')} for garnish.</p>` : ''}</div>
+      </div>
+      ${A.leg(IC.up, IC.down, 'Back', `${IC.play} Open`)}
+    </div>`;
+  },
+  recipe() {
+    const r = byDay[S.dish], m = S.mult, c = craftOf(r);
+    return `<div class="A">
+      ${A.head(`<span class="ttl">${esc(r.n)}${m > 1 ? ' ×' + m : ''}</span><span>${esc(r.en)}</span>`, `<span>${r.t} min${r.p ? ' + ' + mins(r.p) + ' waiting' : ''} · keeps ${esc(keepShort(r))}</span>`)}
+      <div class="A-rec"><div class="cell"><div class="gridwrap" data-grid="5,2.3">${gridHTML(r, m, null)}</div></div>
+        <aside><h3 class="h">Get out</h3>${(r.u || []).map(u => `<div>${esc(UT[u][0].split(/[(:]/)[0])}</div>`).join('') || '<div>Knife, board, bowl</div>'}
+          ${c.miss.length ? `<h3 class="h" style="margin-top:.2rem">Missing</h3>${c.miss.map(k => `<div class="miss">${esc(cap(k))}</div>`).join('')}` : `<p style="margin-top:.2rem"><b>${IC.check} All in stock</b></p>`}</aside></div>
+      ${A.leg('Back', `Batch ×${m}`, '', `${IC.play} Start cooking`)}
+    </div>`;
+  },
+  cook() {
+    const ss = S.session, f = conductor(ss), r = byDay[f.d], m = multOf(ss, f.d), inf = info(r), cur = inf[f.si];
+    const st = si => si === f.si ? (f.kind === 'do' ? 'cur' : f.kind) : stOf(ss, f.d, si);
+    const nDone = r.s.filter((_, i) => stOf(ss, f.d, i) === 'done').length, left = ss.dishes.filter(x => !ss.fin[x.d]).length;
+    const then = cur.parent >= 0 ? `<div class="then">then: ${esc(inf[cur.parent].txt)}</div>` : '';
+    const tm = (big, lab) => `<div class="tm"><b>${big}</b><span>${lab}</span></div>`;
+    let ban, pri;
+    if (f.kind === 'do') { ban = `<div class="A-ban"><div class="main"><div class="lbl">Now · step ${f.si + 1} of ${r.s.length}</div><div class="txt" data-fit=".85,.5">${esc(cur.txt)}</div><div class="ins">${insHTML(r, f.si, m)}</div></div>${cur.min ? tm(mins(cur.min), cur.passive ? 'walk-away timer' : 'timer') : ''}</div>`; pri = cur.min ? `${IC.play} Start ${mins(cur.min)} timer` : `${IC.check} Done · next`; }
+    else if (f.kind === 'busy') { ban = `<div class="A-ban"><div class="main"><div class="lbl">Stay with it · step ${f.si + 1}</div><div class="txt" data-fit=".85,.5">${esc(cur.txt)}</div>${then}</div>${tm(tleft(ss, f.d, f.si), 'left')}</div>`; pri = `${IC.check} Finished early`; }
+    else if (f.kind === 'wait') { ban = `<div class="A-ban"><div class="main"><div class="lbl">Waiting · nothing else to do</div><div class="txt" data-fit=".85,.5">${esc(cur.txt)}</div>${then}</div>${tm(tleft(ss, f.d, f.si), 'left')}</div>`; pri = 'Skip the wait'; }
+    else { ban = `<div class="A-ban ring"><div class="main"><div class="lbl">Time is up · step ${f.si + 1}</div><div class="txt" data-fit=".85,.5">${esc(cur.txt)}</div>${then}</div>${tm('0:00', 'check it')}</div>`; pri = `${IC.check} OK · next`; }
+    return `<div class="A">
+      ${A.head(`<span class="ttl">${esc(r.n)}${m > 1 ? ' ×' + m : ''}</span><span>${pips(nDone, r.s.length)}</span>`, `${chipsHTML(ss, f.kind === 'do' ? '' : key(f.d, f.si))}${ss.dishes.length > 1 ? `<span>${left} dishes to go</span>` : ''}`)}
+      <div class="A-cook"><div class="A-gw"><div class="gridwrap" data-grid="${PROF.h > 150 ? 5.4 : 4.4},2.3">${gridHTML(r, m, st)}</div></div>${ban}</div>
+      ${A.leg(ss.hist.length ? 'Undo' : '', left > 1 ? 'Other dish' : '', S.ui.A.confirmEnd ? 'Press again to end' : 'End session', pri)}
+    </div>`;
+  },
+  done() {
+    const D = S.done, per = Math.floor((PROF.h - 34) / 6.2), start = clamp(D.sel - per + 1, 0, Math.max(0, D.used.length - per));
+    return `<div class="A">
+      ${A.head('<span class="ttl">Stored</span>', `<span>${fmtClock()}</span>`)}
+      <div class="A-done">
+        <section><h3 class="h">Into the fridge</h3>${D.dishes.map(x => `<div class="A-lf"><b>${esc(byDay[x.d].n)}</b><span class="n">${x.keep ? x.n + ' portions' : 'does not keep'}${x.readyIn ? ' · ready in ' + mins(x.readyIn) : ''}</span><span class="by">${x.keep ? 'by ' + byLabel(day0 + x.keep * DAY) : 'eat now'}</span></div>`).join('')}</section>
+        <section><h3 class="h">Used the last of anything?</h3><div class="A-used">${D.used.slice(start, start + per).map((k, i) => `<div class="${start + i === D.sel ? 'sel' : ''}"><i class="cb${D.gone.includes(k) ? ' on' : ''}"></i>${esc(cap(k))}</div>`).join('') || '<p class="mut">Only pantry staples were used.</p>'}</div>
+          <p class="mut" style="margin-top:.15rem">Ticked items leave the pantry, so "can cook now" stays honest.</p></section>
+      </div>
+      ${A.leg(D.used.length ? IC.up : '', D.used.length ? IC.down : '', D.used.length ? 'Tick: all gone' : '', `${IC.check} Finish`)}
+    </div>`;
+  },
+  input(k) {
+    const m = S.mode, ui = S.ui.A, end = ui.confirmEnd; ui.confirmEnd = false;
+    if (m === 'idle') { if (k === 'k1') go.fridge(); if (k === 'k2') go.pick(); if (k === 'k4') go.cook(S.plan); }
+    else if (m === 'fridge') { const n = S.leftovers.length; if (k === 'k1') S.sel = clamp(S.sel - 1, 0, n - 1); if (k === 'k2') S.sel = clamp(S.sel + 1, 0, n - 1); if (k === 'k3') go.idle(); if (k === 'k4') go.ate(S.sel); }
+    else if (m === 'pick') { const n = craft().length; if (k === 'k1') S.sel = clamp(S.sel - 1, 0, n - 1); if (k === 'k2') S.sel = clamp(S.sel + 1, 0, n - 1); if (k === 'k3') go.idle(); if (k === 'k4') go.open(craft()[clamp(S.sel, 0, n - 1)].r.d); }
+    else if (m === 'recipe') { if (k === 'k1') S.mode = 'pick'; if (k === 'k2') S.mult = S.mult % 4 + 1; if (k === 'k4') go.cook([{ d: S.dish, m: S.mult }]); }
+    else if (m === 'cook') { const f = conductor(S.session); if (k === 'k1') undo(); if (k === 'k2') otherDish(); if (k === 'k3') { if (end) go.end(); else ui.confirmEnd = true; } if (k === 'k4') act(f.d, f.si); }
+    else if (m === 'done') { const D = S.done, n = D.used.length; if (k === 'k1') D.sel = clamp(D.sel - 1, 0, n - 1); if (k === 'k2') D.sel = clamp(D.sel + 1, 0, n - 1); if (k === 'k3' && n) { const x = D.used[D.sel], i = D.gone.indexOf(x); if (i < 0) D.gone.push(x); else D.gone.splice(i, 1); } if (k === 'k4') go.finish(); }
+  },
+};
+
+/* ============================================================
+   VARIANT B · CARD: one thing per screen, as large as it will go. Turn to move, push to act.
+   ============================================================ */
+const B = {
+  key: 'B', name: 'Card', controls: 'knob',
+  blurb: 'A cue card. One step per screen in the largest type that fits, readable from across the kitchen. A single knob: turn to move, push to say "done". No lists to scan, no map; the device decides what comes next.',
+  hw: '7.5 inch 800×480 e-paper board that already ships with a case and battery, plus a rotary encoder. The 4.7 inch size shows the pocket version.',
+  type: [['Current step (auto-fits)', 13], ['Quantities', 5.6], ['Hints', 3.8]],
+  help: '<b>↑ ↓</b> or mouse wheel on the knob: turn · <b>Space</b> or click the knob: push · <b>Esc</b>: back',
+  sizes: { '7.5': { w: 163, h: 98, px: [800, 480], label: '7.5″ · 163×98 mm' }, '4.7': { w: 104, h: 58.5, px: [960, 540], label: '4.7″ · 104×58 mm' } },
+  keys: { ArrowUp: 'ccw', ArrowDown: 'cw', ' ': 'push', Enter: 'push', Escape: 'back', Backspace: 'back' },
+  k: () => PROF.h / 98,
+  fit: (a, b) => `data-fit="${(a * B.k()).toFixed(2)},${(b * B.k()).toFixed(2)}"`,
+  card: o => `<div class="B${o.ring ? ' ring' : ''}" style="--k:${B.k()}">
+    <div class="B-top"><span>${o.top}</span>${o.right || ''}</div>
+    ${o.chips ? `<div class="B-chips">${o.chips}</div>` : ''}
+    <div class="B-mid">${o.mid}</div>
+    <div class="B-bot"><span>${o.left || ''}</span><span>${o.hint || ''}</span></div></div>`,
+  dots: (n, i) => `<span class="B-dots">${Array.from({ length: n }, (_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</span>`,
+  cards() {
+    const lf = lfSorted(), ready = craft().filter(c => !c.miss.length), out = [];
+    if (lf.length) out.push({ id: 'fridge', top: urgent(lf[0]) ? 'Eat first' : 'In the fridge', big: lf[0].name, sub: `${lf[0].left} portion${lf[0].left > 1 ? 's' : ''} left · eat by ${byLabel(lf[0].by)}${lf.length > 1 ? ` · ${lf.length - 1} more dish${lf.length > 2 ? 'es' : ''} stored` : ''}`, hint: 'push: fridge list' });
+    out.push({ id: 'pick', top: 'Can cook now', big: `${ready.length} dishes ready`, sub: ready.slice(0, 3).map(c => esc(c.r.n)).join(' · ') || 'Nothing is complete with what is in the kitchen', hint: 'push: choose one' });
+    out.push({ id: 'plan', top: 'This weekend', big: `${S.plan.length} dishes · ${mins(planMins())}`, sub: S.plan.map(p => esc(byDay[p.d].n)).join(' · '), hint: 'push: start the session' });
+    return out;
+  },
+  render() { return ({ idle: B.idle, fridge: B.fridge, pick: B.pick, recipe: B.recipe, cook: B.cook, done: B.done })[S.mode](); },
+  idle() {
+    const cs = B.cards(), i = clamp(S.ui.B.card, 0, cs.length - 1), c = cs[i];
+    return B.card({ top: c.top, right: `<span>${fmtClock()} ${B.dots(cs.length, i)}</span>`, mid: `<div class="B-big" ${B.fit(1.5, .7)}>${esc(c.big)}</div><div class="B-sub">${c.sub}</div>`, left: 'turn: more', hint: c.hint });
+  },
+  fridge() {
+    const lf = lfSorted(), i = clamp(S.sel, 0, lf.length - 1), l = lf[i];
+    return B.card({ top: urgent(l) ? 'Eat first' : 'In the fridge', right: `<span>${i + 1} / ${lf.length}</span>`, mid: `<div class="B-big" ${B.fit(1.5, .7)}>${esc(l.name)}</div><div class="B-sub">${pips(l.left, l.of)} &nbsp;${l.left} of ${l.of} portions · eat by ${byLabel(l.by)}</div>`, left: 'turn: next dish · back: home', hint: 'push: ate one portion' });
+  },
+  pick() {
+    const cr = craft(), sel = clamp(S.sel, 0, cr.length - 1), c = cr[sel], nReady = cr.filter(x => !x.miss.length).length;
+    return B.card({ top: c.miss.length ? `${c.miss.length} item${c.miss.length > 1 ? 's' : ''} away` : 'Ready to cook', right: `<span>${sel + 1} / ${cr.length} · ${nReady} ready</span>`,
+      mid: `<div class="B-big" ${B.fit(1.5, .7)}>${esc(c.r.n)}</div><div class="B-sub">${esc(c.r.en)} · ${c.r.t} min · keeps ${esc(keepShort(c.r))}</div>${c.miss.length ? `<div class="B-note">Needs ${c.miss.map(k => esc(cap(k))).join(', ')}</div>` : `<div class="B-note inv">${IC.check} Everything is in the kitchen</div>`}`,
+      left: 'turn: next dish · back: home', hint: 'push: open' });
+  },
+  recipe() {
+    const r = byDay[S.dish], m = S.mult;
+    const ings = r.i.filter(x => ING[x[0]][3] !== 2).map(x => `<span>${x[1] != null ? `<b>${esc(qstr(x[1], x[2], m))}</b> ` : ''}${esc(short(x))}</span>`).join('');
+    return B.card({ top: esc(r.n), right: `<span>batch ×${m}</span>`, mid: `<div class="B-ings" ${B.fit(.56, .26)}>${ings}</div>`, left: 'turn: batch size · back: list', hint: 'push: start cooking' });
+  },
+  cook() {
+    const ss = S.session, f = conductor(ss), r = byDay[f.d], m = multOf(ss, f.d), inf = info(r), ui = S.ui.B;
+    const si = clamp(f.si + ui.peek, 0, r.s.length - 1), peek = si !== f.si; if (!peek) ui.peek = 0;
+    const cur = inf[si], st = peek ? stOf(ss, f.d, si) : f.kind, multi = ss.dishes.length > 1;
+    const dots = `<span class="B-dots">${r.s.map((_, i) => `<i class="${stOf(ss, f.d, i) === 'done' ? 'on' : ''}${i === si ? ' at' : ''}"></i>`).join('')}</span>`;
+    const top = `${esc(r.n)}${m > 1 ? ' ×' + m : ''}${multi ? ` <small>· ${ss.dishes.filter(x => !ss.fin[x.d]).length} dishes to go</small>` : ''}`;
+    const then = cur.parent >= 0 ? `then: ${esc(inf[cur.parent].txt)}` : 'last step';
+    const chips = chipsHTML(ss, peek || f.kind === 'do' ? '' : key(f.d, f.si));
+    if (peek) return B.card({ top, right: dots, chips, mid: `<div class="B-lab">Looking at step ${si + 1} of ${r.s.length} · ${st === 'done' ? 'done' : st === 'todo' ? 'not yet' : 'timer running'}</div><div class="B-big" ${B.fit(1.1, .6)}>${esc(cur.txt)}</div><div class="B-sub ins">${insHTML(r, si, m)}</div>`, left: 'turn: other steps', hint: 'push: back to now' });
+    if (f.kind === 'do') return B.card({ top, right: dots, chips, mid: `<div class="B-lab">Now · step ${si + 1} of ${r.s.length}</div><div class="B-big" ${B.fit(1.3, .62)}>${esc(cur.txt)}</div><div class="B-sub ins">${insHTML(r, si, m)}</div>`, left: then, hint: cur.min ? `push: start ${mins(cur.min)} timer` : 'push: done' });
+    if (f.kind === 'ring') return B.card({ ring: 1, top, right: dots, chips, mid: `<div class="B-lab">Time is up</div><div class="B-big" ${B.fit(1.3, .62)}>${esc(cur.txt)}</div>`, left: then, hint: 'push: ok' });
+    return B.card({ top, right: dots, chips, mid: `<div class="B-lab">${f.kind === 'busy' ? 'Stay with it' : 'Waiting · nothing else to do'}</div><div class="B-row"><span class="B-count">${tleft(ss, f.d, f.si)}</span><div class="B-big" ${B.fit(.8, .44)}>${esc(cur.txt)}</div></div>`, left: then, hint: f.kind === 'busy' ? 'push: finished early' : 'push: skip the wait' });
+  },
+  done() {
+    const D = S.done;
+    return B.card({ top: 'Stored', right: `<span>${fmtClock()}</span>`, mid: `<div class="B-big" ${B.fit(1.2, .6)}>${D.dishes.length === 1 ? esc(byDay[D.dishes[0].d].n) : D.dishes.length + ' dishes in the fridge'}</div><div class="B-sub">${D.dishes.map(x => `${esc(byDay[x.d].n)}: ${x.keep ? `${x.n} portions, by ${byLabel(day0 + x.keep * DAY)}` : 'eat now'}`).join(' · ')}</div>`, left: 'ran out of something? tell the phone', hint: 'push: home' });
+  },
+  input(k) {
+    const m = S.mode, ui = S.ui.B, turn = k === 'cw' ? 1 : k === 'ccw' ? -1 : 0;
+    if (turn) { ui.rot += turn * 30; const kn = $('knob'); if (kn) kn.style.setProperty('--rot', ui.rot + 'deg'); }
+    if (m === 'idle') { const cs = B.cards(), i = clamp(ui.card, 0, cs.length - 1); if (turn) ui.card = (i + turn + cs.length) % cs.length; if (k === 'push') { const id = cs[i].id; if (id === 'fridge') go.fridge(); if (id === 'pick') go.pick(); if (id === 'plan') go.cook(S.plan); } }
+    else if (m === 'fridge') { if (turn) S.sel = clamp(S.sel + turn, 0, S.leftovers.length - 1); if (k === 'push') go.ate(S.sel); if (k === 'back') go.idle(); }
+    else if (m === 'pick') { const n = craft().length; if (turn) S.sel = clamp(S.sel + turn, 0, n - 1); if (k === 'push') go.open(craft()[clamp(S.sel, 0, n - 1)].r.d); if (k === 'back') go.idle(); }
+    else if (m === 'recipe') { if (turn) S.mult = clamp(S.mult + turn, 1, 4); if (k === 'push') go.cook([{ d: S.dish, m: S.mult }]); if (k === 'back') S.mode = 'pick'; }
+    else if (m === 'cook') { const f = conductor(S.session); if (turn) ui.peek += turn; if (k === 'push') { if (ui.peek) ui.peek = 0; else act(f.d, f.si); } if (k === 'back') { if (ui.peek) ui.peek = 0; else if (!undo()) go.end(); } }
+    else if (m === 'done') { if (k === 'push') go.finish(); }
+  },
+};
+
+/* ============================================================
+   VARIANT C · BOARD: a batch session as lanes. One lane per dish, one bump key under each lane.
+   ============================================================ */
+const C = {
+  key: 'C', name: 'Board', controls: 'bump5',
+  blurb: 'A kitchen display, like a restaurant pass. Up to four dishes side by side, each lane showing only what that dish wants next. A bump key under each lane says "done with that one". The board marks which lane to do now, but you choose.',
+  hw: '10.3 inch panel in a wider case with a five-key bump bar. The 7.5 inch size shows how tight four lanes get.',
+  type: [['Lane step (auto-fits)', 6], ['Countdown', 15], ['Quantities', 3.6], ['Key legends', 4.2]],
+  help: '<b>1 2 3 4</b> lane keys · <b>M</b> menu key · <b>Space</b> bumps the lane the board recommends',
+  sizes: { '10.3': { w: 210, h: 157, px: [1872, 1404], label: '10.3″ · 210×157 mm' }, '7.5': { w: 163, h: 98, px: [800, 480], label: '7.5″ · 163×98 mm' } },
+  keys: { 1: 'l1', 2: 'l2', 3: 'l3', 4: 'l4', 5: 'menu', m: 'menu', M: 'menu', ' ': 'rec', Enter: 'rec' },
+  k: () => Math.min(1, PROF.w / 210),
+  fit: (a, b) => `data-fit="${(a * C.k()).toFixed(2)},${(b * C.k()).toFixed(2)}"`,
+  head: (l, r) => `<div class="C-head">${l}<span class="sp"></span>${r}</div>`,
+  leg: (labels, pri) => `<div class="C-leg">${labels.map((x, i) => `<span class="${i === pri && x ? 'pri' : ''}">${x || ''}</span>`).join('')}</div>`,
+  wrap: inner => `<div class="C" style="--k:${C.k()}">${inner}</div>`,
+  render() { return ({ idle: C.idle, fridge: C.fridge, pick: C.pick, recipe: C.recipe, cook: C.cook, done: C.done })[S.mode](); },
+  idle() {
+    const lf = lfSorted(), cr = craft(), ready = cr.filter(c => !c.miss.length), near = cr.filter(c => c.miss.length === 1);
+    const cols = [0, 1, 2, 3].map(i => ({ label: ['Today', 'Tomorrow', weekday(day0 + 2 * DAY), 'Later'][i], items: lf.filter(l => i < 3 ? dayN(l.by) === i : dayN(l.by) >= 3) }));
+    return C.wrap(`${C.head(`<span class="ttl">Eat by</span><span>${fmtDate()}</span>`, `<span class="brand">evey</span>${batt}`)}
+      <div class="C-grid">${cols.map((c, i) => `<div class="lane C-day${i === 0 ? ' today' : ''}"><div class="lh"><b>${c.label}</b></div><div class="lb">${c.items.map(l => `<div class="C-lf"><b>${esc(l.name)}</b>${pips(l.left, l.of)}</div>`).join('') || '<span class="mut">nothing due</span>'}</div></div>`).join('')}
+        <div class="C-rail"><div><b>${fmtClock()}</b></div><div>fridge<b>${lf.length}</b>dishes</div></div></div>
+      <div class="C-sum"><div><h3 class="h">This weekend</h3><b>${S.plan.length} dishes · ${mins(planMins())} hands-on</b><span>${S.plan.map(p => esc(byDay[p.d].n)).join(' · ')}</span></div>
+        <div><h3 class="h">Can cook now</h3><b>${ready.length} ready · ${near.length} one item away</b><span>${ready.slice(0, 4).map(c => esc(c.r.n)).join(' · ')}</span></div></div>
+      ${C.leg([`${IC.play} Start session`, 'Cook one dish', lf.length ? 'Ate something' : '', '', ''], 0)}`);
+  },
+  fridge() {
+    const lf = lfSorted().slice(0, 4);
+    return C.wrap(`${C.head('<span class="ttl">Ate something</span><span>press the key under the dish</span>', `<span>${fmtClock()}</span>`)}
+      <div class="C-grid">${[0, 1, 2, 3].map(i => { const l = lf[i]; return l ? `<div class="lane${urgent(l) ? ' rec' : ''}"><div class="lh"><b>${esc(l.name)}</b><span>eat by ${byLabel(l.by)}</span></div><div class="lb"><div class="cd">${l.left}</div><div class="tag">of ${l.of} portions left</div>${pips(l.left, l.of)}</div></div>` : '<div class="lane"></div>'; }).join('')}
+        <div class="C-rail"></div></div>
+      ${C.leg([...[0, 1, 2, 3].map(i => lf[i] ? 'Ate one' : ''), 'Back'], -1)}`);
+  },
+  pick() {
+    const cr = craft(), ui = S.ui.C, pages = Math.ceil(cr.length / 3), page = ui.page % pages, tiles = cr.slice(page * 3, page * 3 + 3);
+    const t = ui.set.reduce((s, d) => s + byDay[d].t, 0);
+    return C.wrap(`${C.head('<span class="ttl">Cook now</span><span>ready dishes first</span>', `<span>page ${page + 1} / ${pages}</span>`)}
+      <div class="C-grid">${[0, 1, 2].map(i => { const c = tiles[i]; if (!c) return '<div class="lane"></div>'; const on = ui.set.includes(c.r.d);
+        return `<div class="lane C-tile${on ? ' on' : ''}"><div class="lh"><b>${on ? IC.check + ' ' : ''}${c.miss.length ? c.miss.length + ' away' : 'Ready'}</b><span>${c.r.t} min · keeps ${esc(keepShort(c.r))}</span></div><div class="lb"><div class="big" ${C.fit(.7, .42)}>${esc(c.r.n)}</div><div style="font-size:calc(.34rem*var(--k))">${esc(c.r.en)}</div>${pill(c.r.b)}${c.miss.length ? `<div class="then">needs ${c.miss.map(esc).join(', ')}</div>` : ''}</div></div>`; }).join('')}
+        <div class="lane"><div class="lh"><b>This session</b><span>${ui.set.length} dishes · ${mins(t) || '0 min'}</span></div><div class="lb">${ui.set.map(d => `<div class="tag" style="letter-spacing:.04em">${esc(byDay[d].n)}</div>`).join('') || '<span class="mut">Add dishes with the keys under them.</span>'}</div></div>
+        <div class="C-rail"></div></div>
+      ${C.leg([...[0, 1, 2].map(i => tiles[i] ? (ui.set.includes(tiles[i].r.d) ? 'Remove' : 'Add') : ''), ui.set.length ? `${IC.play} Start` : 'Back', 'More'], ui.set.length ? 3 : -1)}`);
+  },
+  recipe() {
+    const r = byDay[S.dish], m = S.mult;
+    const ings = r.i.filter(x => ING[x[0]][3] !== 2).map(x => `<span class="in">${x[1] != null ? `<b>${esc(qstr(x[1], x[2], m))}</b> ` : ''}${esc(short(x))}</span>`);
+    const half = Math.ceil(ings.length / 2);
+    return C.wrap(`${C.head(`<span class="ttl">${esc(r.n)}${m > 1 ? ' ×' + m : ''}</span><span>${esc(r.en)}</span>`, `<span>${r.t} min</span>`)}
+      <div class="C-grid"><div class="lane"><div class="lh"><b>Ingredients</b></div><div class="lb"><div class="ins">${ings.slice(0, half).join('')}</div></div></div>
+        <div class="lane"><div class="lh"><b>&nbsp;</b></div><div class="lb"><div class="ins">${ings.slice(half).join('')}</div></div></div>
+        <div class="lane"><div class="lh"><b>Get out</b></div><div class="lb"><div class="ins">${(r.u || []).map(u => `<span class="in">${esc(UT[u][0].split(/[(:]/)[0])}</span>`).join('') || '<span class="in">Knife, board, bowl</span>'}</div></div></div>
+        <div class="lane"><div class="lh"><b>Keeps</b></div><div class="lb"><div class="tag">${esc(r.k)}</div>${pill(r.b)}</div></div><div class="C-rail"></div></div>
+      ${C.leg(['Back', `Batch ×${m}`, '', `${IC.play} Start`, ''], 3)}`);
+  },
+  cook() {
+    const ss = S.session, ui = S.ui.C, shown = ss.lanes.filter(d => d != null), rec = conductor(ss, shown), legs = [];
+    const lanes = ss.lanes.map(d => {
+      if (d == null) { legs.push(''); return '<div class="lane"></div>'; }
+      const r = byDay[d], m = multOf(ss, d), inf = info(r), nx = dishNext(ss, d), nDone = r.s.filter((_, i) => stOf(ss, d, i) === 'done').length;
+      const head = `<div class="lh"><b>${esc(r.n)}${m > 1 ? ' ×' + m : ''}</b><span>${pips(nDone, r.s.length)}</span></div>`;
+      if (nx.kind === 'fin') { const f = ss.fin[d]; legs.push(ss.queue.length ? `Next: ${esc(byDay[ss.queue[0]].n)}` : ''); return `<div class="lane fin">${head}<div class="lb"><div class="tag">Done</div><div class="txt">${f.keep ? `${f.n} portions, eat by ${byLabel(day0 + f.keep * DAY)}` : 'Eat now'}</div>${f.readyIn ? `<div class="tag">ready in ${mins(f.readyIn)}</div>` : ''}</div></div>`; }
+      const cur = inf[nx.si], isRec = rec.d === d && rec.kind === nx.kind && (nx.kind === 'do' || nx.kind === 'ring' || nx.kind === 'busy'), then = cur.parent >= 0 ? `<div class="then">then: ${esc(inf[cur.parent].txt)}</div>` : '';
+      if (nx.kind === 'do') { legs.push(cur.min ? `Start ${mins(cur.min)}` : 'Done'); return `<div class="lane${isRec ? ' rec' : ''}">${head}<div class="lb"><div class="tag">${isRec ? 'Do this now' : 'Ready when you are'} · ${nx.si + 1}/${r.s.length}</div><div class="txt" ${C.fit(.6, .36)}>${esc(cur.txt)}</div><div class="ins">${insHTML(r, nx.si, m)}</div>${then}</div></div>`; }
+      if (nx.kind === 'ring') { legs.push('OK'); return `<div class="lane ring">${head}<div class="lb"><div class="tag">Time is up</div><div class="txt" ${C.fit(.6, .36)}>${esc(cur.txt)}</div>${then}</div></div>`; }
+      legs.push(nx.kind === 'busy' ? 'Finished' : 'Skip wait');
+      return `<div class="lane${isRec ? ' rec' : ''}">${head}<div class="lb"><div class="tag">${nx.kind === 'busy' ? 'Stay with it' : 'Waiting'}</div><div class="cd">${tleft(ss, d, nx.si)}</div><div class="txt" ${C.fit(.44, .3)}>${esc(cur.txt)}</div>${then}</div></div>`;
+    });
+    const el = Math.floor((now() - ss.t0) / 60000), stepsLeft = ss.dishes.reduce((s, x) => s + byDay[x.d].s.filter((_, i) => stOf(ss, x.d, i) !== 'done').length, 0);
+    const recLane = ss.lanes.indexOf(rec.d), pri = rec.kind === 'wait' || rec.kind === 'fin' ? -1 : recLane;
+    return C.wrap(`${C.head('<span class="ttl">Session</span>', `<span>${ss.dishes.filter(x => !ss.fin[x.d]).length} dishes to go · ${stepsLeft} steps</span>`)}
+      <div class="C-grid">${lanes.join('')}<div class="C-rail"><div><b>${fmtClock()}</b></div><div>going for<b>${Math.floor(el / 60)}:${String(el % 60).padStart(2, '0')}</b></div>${ss.queue.length ? `<div>queued<b>${ss.queue.length}</b>${esc(byDay[ss.queue[0]].n)}</div>` : ''}${Object.keys(ss.fin).length ? `<div>stored<b>${Object.keys(ss.fin).length}</b></div>` : ''}${rec.kind === 'wait' ? '<div>all lanes waiting</div>' : ''}</div></div>
+      ${ui.menu ? '<div class="C-menu">Menu</div>' + C.leg([ss.hist.length ? 'Undo' : '', '', 'End session', '', 'Close'], -1) : C.leg([...legs, 'Menu'], pri)}`);
+  },
+  done() {
+    const D = S.done, show = D.dishes.slice(0, 4);
+    return C.wrap(`${C.head('<span class="ttl">Stored</span>', `<span>${fmtClock()}</span>`)}
+      <div class="C-grid">${[0, 1, 2, 3].map(i => { const x = show[i]; return x ? `<div class="lane"><div class="lh"><b>${esc(byDay[x.d].n)}</b><span>${x.keep ? 'in the fridge' : 'does not keep'}</span></div><div class="lb"><div class="cd">${x.keep ? x.n : '0'}</div><div class="tag">portions</div><div class="txt">${x.keep ? 'eat by ' + byLabel(day0 + x.keep * DAY) : 'eat now'}</div>${x.readyIn ? `<div class="tag">ready in ${mins(x.readyIn)}</div>` : ''}</div></div>` : '<div class="lane"></div>'; }).join('')}
+        <div class="C-rail">${D.dishes.length > 4 ? `<div>and<b>${D.dishes.length - 4}</b>more</div>` : ''}</div></div>
+      ${C.leg(['', '', '', `${IC.check} Finish`, ''], 3)}`);
+  },
+  input(k) {
+    const m = S.mode, ui = S.ui.C, li = ['l1', 'l2', 'l3', 'l4'].indexOf(k);
+    if (m === 'idle') { if (k === 'l1' || k === 'rec') go.cook(S.plan); if (k === 'l2') { go.pick(); ui.page = 0; ui.set = []; } if (k === 'l3') go.fridge(); }
+    else if (m === 'fridge') { if (li >= 0) go.ate(li); if (k === 'menu') go.idle(); }
+    else if (m === 'pick') { const cr = craft(), pages = Math.ceil(cr.length / 3), c = cr[(ui.page % pages) * 3 + li];
+      if (li >= 0 && li < 3 && c) { const i = ui.set.indexOf(c.r.d); if (i < 0) ui.set.push(c.r.d); else ui.set.splice(i, 1); }
+      if (k === 'l4' || k === 'rec') { if (ui.set.length) go.cook(ui.set.map(d => ({ d, m: 1 }))); else go.idle(); }
+      if (k === 'menu') ui.page = (ui.page + 1) % pages; }
+    else if (m === 'recipe') { if (k === 'l1') { S.mode = 'pick'; ui.set = []; } if (k === 'l2') S.mult = S.mult % 4 + 1; if (k === 'l4' || k === 'rec') go.cook([{ d: S.dish, m: S.mult }]); }
+    else if (m === 'cook') { const ss = S.session;
+      if (ui.menu) { ui.menu = false; if (k === 'l1') undo(); if (k === 'l3') go.end(); return; }
+      if (k === 'menu') { ui.menu = true; return; }
+      const d = k === 'rec' ? conductor(ss, ss.lanes.filter(x => x != null)).d : ss.lanes[li]; if (d == null) return;
+      const nx = dishNext(ss, d);
+      if (nx.kind === 'fin') { if (k !== 'rec' && ss.queue.length) { ss.lanes[li] = ss.queue.shift(); ss.prefer = ss.lanes[li]; } }
+      else act(d, nx.si); }
+    else if (m === 'done') { if (k === 'l4' || k === 'rec') go.finish(); }
+  },
+};
+
+/* ============================================================
+   LAB: device shell, e-paper simulation, switcher, state panel. Throwaway plumbing.
+   ============================================================ */
+const VARIANTS = { A, B, C }, ORDER = ['A', 'B', 'C'];
+let V = A, PROF = A.sizes['9.7'], FX = P.get('fx') !== '0', lastHTML = '', painting = false, queued = false, queuedFull = false, paints = 0, lastSig = '';
+
+function fitBox(el) {
+  // Tolerance: tight line-heights let glyph ascenders/descenders report a few px of overflow; a real overflow is a whole line.
+  const [max, min] = el.dataset.fit.split(',').map(Number), remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const over = f => el.scrollHeight > el.clientHeight + f * remPx * 0.35 || el.scrollWidth > el.clientWidth + 1;
+  let f = max; el.style.fontSize = f + 'rem';
+  while (f > min && over(f)) { f = Math.max(min, f - 0.02); el.style.fontSize = f + 'rem'; }
+}
+function fitGrid(wrap, maxMm, minMm) {
+  const t = wrap.querySelector('table'); if (!t) return null;
+  const fits = f => { t.style.setProperty('--gf', f / 100 + 'rem'); return t.offsetHeight <= wrap.clientHeight + 1 && t.offsetWidth <= wrap.clientWidth + 1; };
+  // binary search in 0.1 mm steps (integers in tenths of a mm)
+  let lo = Math.round(minMm * 10), hi = Math.round(maxMm * 10), ok = true;
+  if (fits(hi)) lo = hi;
+  else if (!fits(lo)) ok = false;
+  else { while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (fits(mid)) lo = mid; else hi = mid; } }
+  fits(lo);
+  const f = lo / 10;
+  wrap.dataset.fitMm = f.toFixed(1); wrap.dataset.fitOk = ok;
+  return { f, ok };
+}
+function post(scr) {
+  scr.querySelectorAll('[data-fit]').forEach(fitBox);
+  scr.querySelectorAll('[data-grid]').forEach(w => { const [a, b] = w.dataset.grid.split(',').map(Number); fitGrid(w, a, b); });
+}
+function paint(full) {
+  renderLab();
+  const scr = $('eink');
+  if (!FX) { const h = V.render(); scr.innerHTML = h; lastHTML = h; post(scr); return; }
+  if (!full && V.render() === lastHTML) return;
+  if (painting) { queued = true; queuedFull = queuedFull || !!full; return; }
+  painting = true;
+  const isFull = !!full || ++paints % 14 === 0;   // e-paper needs a full clearing refresh now and then
+  if (isFull) scr.classList.add('flash');
+  setTimeout(() => {
+    const h = V.render(); scr.innerHTML = h; lastHTML = h; post(scr); scr.classList.remove('flash'); painting = false;
+    if (queued) { const f = queuedFull; queued = queuedFull = false; paint(f); }
+  }, isFull ? 650 : 280);
+}
+let actx;
+function beep() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); [0, 0.35, 0.7].forEach(t => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = 880; g.gain.value = 0.08; o.connect(g); g.connect(actx.destination); o.start(actx.currentTime + t); o.stop(actx.currentTime + t + 0.18); }); } catch (e) {}
+}
+function input(k) {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume && actx.resume(); } catch (e) {}
+  const m0 = S.mode; V.input(k); paint(S.mode !== m0);
+}
+function timerSig() {
+  const ss = S.session; let s = fmtClock();
+  if (ss) { for (const k in ss.timers) s += '|' + k + ss.st[k] + tlabel(ss.timers[k].end - now()); if (V.key === 'C') s += '|' + Math.floor((now() - ss.t0) / 60000); }
+  return s;
+}
+function tick() {
+  const ss = S.session; let rang = false;
+  if (ss) for (const k in ss.timers) if (ss.st[k] === 'run' && ss.timers[k].end <= now()) { ss.st[k] = 'ring'; rang = true; }
+  if (rang) beep();
+  const sig = timerSig(); if (rang || sig !== lastSig) { lastSig = sig; paint(false); }
+}
+
+function buildDevice() {
+  const d = $('dev'), scr = `<div class="eink" id="eink" style="--w:${PROF.w / 10};--h:${PROF.h / 10}"></div>`;
+  d.className = 'dev' + (V.controls === 'knob' ? ' has-knob' : '');
+  if (V.controls === 'soft4') d.innerHTML = `${scr}<div class="keys soft4">${['k1', 'k2', 'k3', 'k4'].map((k, i) => `<button class="key${i === 3 ? ' pri' : ''}" data-in="${k}">${i === 3 ? '4 · space' : i + 1}</button>`).join('')}</div>`;
+  if (V.controls === 'bump5') d.innerHTML = `${scr}<div class="keys bump5">${[1, 2, 3, 4].map(i => `<button class="key pri" data-in="l${i}">${i}</button>`).join('')}<button class="key" data-in="menu">M</button></div>`;
+  if (V.controls === 'knob') d.innerHTML = `${scr}<div class="dev-side"><button class="knob" id="knob" data-in="push" title="click: push · wheel: turn" style="--rot:${S.ui.B.rot}deg"></button><div class="turns"><button class="mini" data-in="ccw">↺</button><button class="mini" data-in="cw">↻</button></div><button class="mini" data-in="back">back</button><div class="hint">wheel or ↑ ↓ turn<br>space push · esc back</div></div>`;
+  lastHTML = '';
+}
+const PANEL = !!P.get('panel');   // ?panel=1: only the screen, at the panel's native pixel count, thresholded to 1-bit
+if (PANEL) document.body.classList.add('panel');
+function layout() {
+  const st = $('stage'), root = document.documentElement;
+  if (PANEL) { root.style.fontSize = (PROF.px[0] / PROF.w) * 10 + 'px'; post($('eink')); return; }
+  $('cal').classList.toggle('on', S.scale === 'true');
+  if (S.scale === 'true') root.style.fontSize = S.ppmm * 10 + 'px';
+  else { root.style.fontSize = '40px'; const d = $('dev'); root.style.fontSize = 40 * Math.min((st.clientWidth - 36) / d.offsetWidth, (st.clientHeight - 100) / d.offsetHeight) + 'px'; }
+  post($('eink')); renderLab();
+}
+function syncURL() {
+  const q = new URLSearchParams({ variant: S.variant, size: S.size });
+  if (S.scale === 'true') { q.set('scale', 'true'); q.set('ppmm', S.ppmm.toFixed(2)); }
+  if (SPEED !== 1) q.set('speed', SPEED); if (!FX) q.set('fx', '0');
+  history.replaceState(null, '', '?' + q);
+  $('sw-label').textContent = `${V.key} · ${V.name}`;
+  $('c-size').innerHTML = Object.entries(V.sizes).map(([k, s]) => `<option value="${k}"${k === S.size ? ' selected' : ''}>${s.label}</option>`).join('');
+  $('c-fit').setAttribute('aria-pressed', S.scale !== 'true'); $('c-true').setAttribute('aria-pressed', S.scale === 'true');
+  $('c-s1').setAttribute('aria-pressed', SPEED === 1); $('c-s60').setAttribute('aria-pressed', SPEED === 60);
+  $('c-fx').setAttribute('aria-pressed', FX); $('c-ppmm').value = S.ppmm;
+}
+function setVariant(key, size) {
+  V = VARIANTS[key] || A; S.variant = V.key;
+  S.size = V.sizes[size] ? size : Object.keys(V.sizes)[0]; PROF = V.sizes[S.size];
+  buildDevice(); syncURL();
+  const h = V.render(); $('eink').innerHTML = h; lastHTML = h; layout();
+}
+function renderLab() {
+  const ss = S.session, cr = craft(), ppmm = parseFloat(getComputedStyle(document.documentElement).fontSize) / 10;
+  const f = ss ? conductor(ss) : null;
+  const dist = mm => (0.7 * mm / 5.82).toFixed(1);   // cap height ≈ 0.7 em; 20 arcmin for comfortable reading
+  $('side').innerHTML = `
+    <h2>${V.key} · ${V.name}</h2><p>${V.blurb}</p>
+    <h2>Would be built from</h2><p>${V.hw}</p>
+    <h2>Type size → comfortable reading distance</h2>
+    <table>${V.type.map(([n, mm]) => `<tr><td>${n}</td><td>${mm} mm → ${dist(mm)} m</td></tr>`).join('')}</table>
+    <p style="margin-top:6px;color:#8d949e">For scale: phone body text is about 2.5 mm (0.3 m), a printed cookbook about 3.5 mm (0.4 m).</p>
+    <h2>Keys</h2><p>${V.help}<br><b>← →</b> switch variant</p>
+    <h2>State</h2>
+    <dl><dt>screen</dt><dd>${S.mode}${S.mode === 'pick' || S.mode === 'fridge' ? ' · sel ' + S.sel : ''}${S.mode === 'recipe' ? ' · ' + esc(byDay[S.dish].n) + ' ×' + S.mult : ''}</dd>
+      <dt>device</dt><dd>${PROF.w}×${PROF.h} mm at ${ppmm.toFixed(2)} px/mm (${S.scale === 'true' ? 'true size' : 'fit'})</dd>
+      ${f ? `<dt>do now</dt><dd>${esc(byDay[f.d].n)} · step ${f.si + 1} · ${f.kind}${f.si >= 0 && info(byDay[f.d])[f.si].min ? ' · ' + (info(byDay[f.d])[f.si].passive ? 'walk-away' : 'hands-on') + ' ' + info(byDay[f.d])[f.si].min + ' min' : ''}</dd>` : ''}
+      ${ss ? ss.dishes.map(x => `<dt>${esc(byDay[x.d].n)}</dt><dd>${byDay[x.d].s.map((_, i) => ({ todo: '·', run: '◷', ring: '!', done: '■' })[stOf(ss, x.d, i)]).join('')}${ss.fin[x.d] ? ' stored' : ''}</dd>`).join('') : ''}
+      ${ss ? `<dt>timers</dt><dd>${Object.keys(ss.timers).map(k => k + ' ' + (ss.st[k] === 'ring' ? 'RING' : tlabel(ss.timers[k].end - now()))).join(', ') || 'none'}</dd><dt>undo stack</dt><dd>${ss.hist.length}</dd>` : ''}
+      <dt>craftable</dt><dd>${cr.filter(c => !c.miss.length).length} ready · ${cr.filter(c => c.miss.length === 1).length} one away · ${cr.length} total</dd>
+      <dt>fridge</dt><dd>${lfSorted().map(l => `${esc(l.name)} ${l.left}/${l.of} (${byLabel(l.by)})`).join('; ') || 'empty'}</dd></dl>
+    <h2>Pantry · stands in for the backoffice</h2>
+    <div class="pre"><button data-pre="shopped">Just shopped</button><button data-pre="midweek">Midweek</button><button data-pre="bare">Nearly bare</button></div>
+    <div class="chips">${FRESH.map(k => `<button data-pan="${esc(k)}" class="${S.pantry.has(k) ? 'on' : ''}">${esc(k)}</button>`).join('')}</div>
+    <p style="margin-top:8px;color:#8d949e">${STAPLES.filter(k => S.pantry.has(k)).length} of ${STAPLES.length} pantry staples in stock. Toggle things and watch "can cook now" change on the device.</p>
+    <p style="color:#8d949e">Recipes: Shota Horii, Aisle to Tokyo (97 from japanese-batch-kitchen).</p>`;
+}
+
+/* grid-fit measurement: how large can the full process grid be set on each screen size? (?measure=1) */
+async function runMeasure() {
+  try { await Promise.all(['500 10px "Barlow Condensed"', '600 10px "Barlow Condensed"', '700 10px "Barlow Condensed"', '400 10px "Atkinson Hyperlegible Next"', '600 10px "Atkinson Hyperlegible Next"', '600 10px "IBM Plex Mono"', 'italic 400 10px "Atkinson Hyperlegible Next"'].map(f => document.fonts.load(f))); await document.fonts.ready; } catch (e) {}
+  document.documentElement.style.fontSize = '80px';
+  document.body.innerHTML = '<div class="eink" id="mh" style="--w:30;--h:30;position:absolute;left:0;top:0"></div><pre id="measure">measuring…</pre>';
+  document.body.style.overflow = 'auto'; document.body.style.display = 'block';
+  const host = $('mh'), sizes = { '7.5': [163, 98], '9.7': [203, 139], '10.3': [210, 157], '13.3': [270, 203] };
+  const lay = { 'overview (grid + header + keys)': [35, 18], 'cooking (grid above a 34 mm step banner)': [0, 52] }, out = {};
+  for (const [sn, [w, h]] of Object.entries(sizes)) for (const [ln, [dw, dh]] of Object.entries(lay)) {
+    const fits = R.map(r => {
+      host.innerHTML = `<div style="position:relative;width:${(w - dw) / 10}rem;height:${(h - dh) / 10}rem"><div class="gridwrap">${gridHTML(r, 1, null)}</div></div>`;
+      return { d: r.d, n: r.n, ...fitGrid(host.querySelector('.gridwrap'), 6, 1.6) };
+    });
+    const pct = x => Math.round(100 * fits.filter(f => f.ok && f.f >= x).length / fits.length), sorted = fits.map(f => f.f).sort((a, b) => a - b);
+    out[`${sn}" ${ln}`] = { 'fits at >=3.5mm (cookbook print)': pct(3.5) + '%', '>=3.0mm': pct(3.0) + '%', '>=2.5mm (phone text)': pct(2.5) + '%', 'does not fit even at 1.6mm': fits.filter(f => !f.ok).length, medianMm: sorted[sorted.length >> 1], worst: fits.sort((a, b) => a.f - b.f).slice(0, 4).map(f => `${f.n} ${f.f}`) };
+  }
+  host.remove(); $('measure').textContent = JSON.stringify({ fonts: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family), out }, null, 1);
+  document.title = 'measure done';
+}
+
+/* wiring */
+$('dev').addEventListener('click', e => { const b = e.target.closest('[data-in]'); if (b) { b.blur(); input(b.dataset.in); } });
+let wheelAt = 0;
+$('dev').addEventListener('wheel', e => { if (V.controls !== 'knob') return; e.preventDefault(); if (Date.now() - wheelAt < 110) return; wheelAt = Date.now(); input(e.deltaY > 0 ? 'cw' : 'ccw'); }, { passive: false });
+const cycle = dir => { setVariant(ORDER[(ORDER.indexOf(V.key) + dir + ORDER.length) % ORDER.length]); };
+$('sw-prev').onclick = () => cycle(-1); $('sw-next').onclick = () => cycle(1);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea, select, [contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); return cycle(-1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); return cycle(1); }
+  const k = V.keys[e.key]; if (k) { e.preventDefault(); input(k); }
+});
+$('side').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.pre) S.pantry = preset(b.dataset.pre);
+  if (b.dataset.pan) { const k = b.dataset.pan; if (S.pantry.has(k)) S.pantry.delete(k); else S.pantry.add(k); }
+  S.pv++; paint(false);
+});
+$('c-size').onchange = e => setVariant(V.key, e.target.value);
+$('c-fit').onclick = () => { S.scale = 'fit'; syncURL(); layout(); };
+$('c-true').onclick = () => { S.scale = 'true'; syncURL(); layout(); };
+$('c-ppmm').oninput = e => { S.ppmm = +e.target.value; syncURL(); layout(); };
+$('c-s1').onclick = () => { setSpeed(1); syncURL(); };
+$('c-s60').onclick = () => { setSpeed(60); syncURL(); };
+$('c-fx').onclick = () => { FX = !FX; syncURL(); };
+$('c-reset').onclick = () => { location.href = location.pathname + '?variant=' + V.key; };
+window.addEventListener('resize', layout);
+
+if (P.get('measure')) runMeasure();
+else {
+  setVariant(P.get('variant') || 'A', P.get('size'));
+  const replay = (P.get('go') || '').split(',').filter(Boolean);
+  replay.forEach(tok => { const t = /^t(\d+)$/.exec(tok); if (t) { simBase += t[1] * 60000; const ss = S.session; if (ss) for (const k in ss.timers) if (ss.st[k] === 'run' && ss.timers[k].end <= now()) ss.st[k] = 'ring'; } else V.input(tok); });
+  if (replay.length) { const h = V.render(); $('eink').innerHTML = h; lastHTML = h; post($('eink')); renderLab(); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  setInterval(tick, 250);
+}
+</script>
+</body>
+</html>
