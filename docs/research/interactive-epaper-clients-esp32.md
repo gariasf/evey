@@ -2,14 +2,14 @@
 
 Checked 2026-11-20. Facts come from Espressif's datasheets, the ESP-IDF Programming Guide read from its source at a pinned commit, library and firmware repositories read at the pinned commits linked below, measurements published by those projects' own authors, and the FSF's licence texts and GPL FAQ. "Computed" marks my arithmetic on sourced inputs and "my reading" marks interpretation. Anything not confirmed is marked UNVERIFIED and collected at the end. The licence lines say what the texts say; they are not legal advice.
 
-**How strong the evidence is.** Strong for Espressif's chip currents, the protocol clients' defaults and every licence: all read from source. Medium for latency: Espressif publishes throughput and the power-save receive delay, but no request round-trip time, and no PNG decode figure exists for the ESP32-S3. Thin for board-level current: no vendor publishes it for a board that stays awake with Wi-Fi. [Key press to frame on the real board][t21] settles those.
+**How strong the evidence is.** Strong for Espressif's current figures, the protocol clients' defaults and every licence: all read from source. Medium for latency: Espressif publishes throughput and the power-save receive delay, but no request round-trip time, and no PNG decode figure was found for the ESP32-S3. Thin for board-level current: none was found published for a board that stays awake with Wi-Fi. [Key press to frame on the real board][t21] settles those.
 
 This note builds on [software-prior-art.md §4][prior] (TRMNL's contract, ESPHome `online_image`, the Inkplate examples, OpenEPaperLink) and [hardware-mcu-epaper-boards.md][hw] (boards, refresh times, the battery estimate), and does not repeat them.
 
 ## Key findings
 
 1. **Staying associated costs the ESP32 little.** With Wi-Fi associated, an ESP32-S3 averages 0.93–2.45 mA in auto light sleep and 19.5–40.1 mA in modem sleep, measured by Espressif in a shielded box [idf-cur-s3]. A two-hour session then costs about 2–5 mAh or 39–80 mAh (computed). The candidate boards carry 2,000 mAh or more [hw].
-2. **The panel, not the network, sets the latency.** A 1-bit 800×480 frame is 48,000 bytes: about 19 ms at the 20 Mbit/s TCP rate Espressif measured over the air in its lab (computed) [idf-wifi-perf]. A partial refresh on the reTerminal E1001's panel takes 435 ms [gx-gdey075t7]. Power save adds up to one DTIM interval when a reply comes more than 50 ms after the station woke [idf-wifi-perf] [idf-wifi-kconfig].
+2. **The panel, not the network, sets the latency.** A 1-bit 800×480 frame is 48,000 bytes: about 19 ms at the 20 Mbit/s TCP rate Espressif measured over the air in its lab (computed) [idf-wifi-perf]. A partial refresh on the reTerminal E1001's panel takes 435 ms [gx-gdey075t7]. Power save adds up to one DTIM interval when a reply comes more than 50 ms after the request [idf-wifi-perf] [idf-wifi-kconfig].
 3. **TRMNL X already makes a round trip per tap.** A left or right tap asks `/api/display` for the previous or next frame, and the firmware stays awake until 20 s pass without a touch [tr-touch-h] [tr-bl]. It is the nearest prior art to a session, and it lasts 20 seconds, not two hours.
 4. **MIT firmware is possible on every candidate board.** Seeed_GFX2 (MIT) drives the reTerminal E1001 to E1004 with partial and fast refresh [sgfx2] [sgfx2-lic]. FastEPD (Apache-2.0) drives the Inkplate 10 and TRMNL X, and TRMNL's own E1003 build uses it [fastepd] [fastepd-h] [tr-pio]. GxEPD2, Seeed_GxEPD2, bb_epaper and ESPHome's C++ runtime are GPL-3.0 [gx-lic] [sgx-lic] [bbep-lic] [esphome-lic].
 5. **A fork of TRMNL's firmware would put GPL-3.0 files in this repo.** GPLv3 licenses a modified work "as a whole" under the GPL [gpl3], and ADR 0001 says everything in the repo is published under MIT [adr1]. Building on it needs that ADR amended, or the firmware kept in another repo (my reading).
@@ -27,7 +27,7 @@ Espressif's averages are at 160 MHz, measured in a shielded box [idf-lp-wifi] [i
   - ESP32: 3.34 / 2.33 / 2.19 mA [idf-cur-esp32].
   - It needs `CONFIG_PM_ENABLE`, off by default, and FreeRTOS tickless idle [idf-pm] [idf-pm-kconfig].
 - **Power save off** (`WIFI_PS_NONE`). Espressif publishes no average. The radio then listens all the time (my reading). Receiving is rated at 88–91 mA on the ESP32-S3 and 95–100 mA on the ESP32, the ESP32's figure also covering "Rx and listening" [ds-s3] [ds-esp32]. That makes at least 176 mAh on the ESP32-S3 and 190–200 mAh on the ESP32 per two-hour session (computed).
-- **Board level is not published.** Espressif adds 140 µA in light sleep for 8 MB of octal PSRAM [ds-s3]. The hardware note assumed 5–30 mA for a session [hw-battery]. Espressif's figures put auto light sleep below that range and modem sleep with frequency scaling inside it.
+- **Board level is not published.** In light sleep, Espressif adds 140 µA for 8 MB of octal PSRAM at 3.3 V, or 200 µA at 1.8 V [ds-s3]. The hardware note assumed 5–30 mA for a session [hw-battery]. Espressif's figures put auto light sleep below that range and modem sleep with frequency scaling inside it.
 - **Reference.** TRMNL's deep-sleep cycle costs 0.186 mAh and takes about 10.5 s per wake on its ESP32-C3 model [tr-readme]. For the 44 presses of [#7][t7]'s five-recipe session, that is about 8 mAh (computed), at 10 s a press.
 
 Latency from a key press, by stage:
@@ -43,10 +43,10 @@ Latency from a key press, by stage:
 ## 2. Request patterns
 
 - **HTTP keep-alive.** `esp_http_client` keeps the connection open for further requests on the same handle, unless the server sends `Connection: close` [idf-http]. Arduino's `HTTPClient` keeps alive by default (`setReuse`, `_reuse = true`) [ard-http].
-- **WebSocket.** `esp_websocket_client` (Apache-2.0) reconnects by itself after 10 s, pings every 10 s and aborts after 120 s without a pong; all three are settable [ws-h] [ws-c]. A 10 s ping keys the radio every 10 s while idle (my reading). On Arduino, arduinoWebSockets (LGPL-2.1 [arduinows-lic]) retries every 500 ms by default [arduinows].
+- **WebSocket.** `esp_websocket_client` (Apache-2.0) reconnects by itself after 10 s, pings every 10 s and aborts after 120 s without a pong; all three are settable [ws-h] [ws-c]. A 10 s ping wakes the radio to transmit every 10 s while idle (my reading). On Arduino, arduinoWebSockets (LGPL-2.1 [arduinows-lic]) retries every 500 ms by default [arduinows].
 - **MQTT.** `esp-mqtt` (Apache-2.0 [mqtt-lic]) sends a keep-alive every 120 s and reconnects after 10 s [mqtt-h] [mqtt-cfg], and needs a broker. Arduino's PubSubClient (MIT [pubsub-lic]) keeps alive every 15 s and caps packets at 256 bytes by default. Its `setBufferSize` takes a 16-bit size, so at most 65,535 bytes: less than a 1200×825 frame [pubsub].
 - **Long polling.** No ESP-specific source was read. It is an HTTP request the server holds open, so it uses the keep-alive client above and pays the same push delay (my reading).
-- **Reconnection.** After a beacon timeout the station sends five probe requests, then disconnects. "It is the application's responsibility to reconnect": call `esp_wifi_connect()`, close every socket and re-create them [idf-wifi-sta].
+- **Reconnection.** After a beacon timeout the station sends five probe requests, and disconnects if the access point still does not answer. "It is the application's responsibility to reconnect": call `esp_wifi_connect()`, close every socket and re-create them [idf-wifi-sta].
 - **Latency.** Espressif publishes no request round-trip time; #21 measures it.
 
 ## 3. Frames
@@ -58,7 +58,7 @@ Latency from a key press, by stage:
   - No ESP32-S3 figure is published.
 - **Refresh.** Board figures are in the hardware note [hw].
   - GxEPD2's driver for the E1001's panel records 435 ms for a partial refresh, 1,171 ms for a fast full one, and 129 ms to power the panel on [gx-gdey075t7].
-  - The Inkplate driver can leave the panel supply on between updates to save that time [ink-drv].
+  - The Inkplate driver can leave the panel supply on between updates, to save the supply's start-up time at the next update [ink-drv].
 - **Partial regions.**
   - GxEPD2 windows need x and width in multiples of 8, "an addressing limitation of the e-paper controllers" [gx-bw].
   - FastEPD updates a band of rows [fastepd-h].
@@ -81,13 +81,13 @@ Latency from a key press, by stage:
 What each provides, its licence, and what building on it means here (my reading of the texts below):
 
 - **TRMNL firmware** (GPL-3.0 [tr-lic]). Arduino on ESP-IDF [tr-pio], with captive-portal provisioning, OTA, fast refresh and button handling [prior], and the TRMNL X touch bar [tr-touch-h]. It draws with bb_epaper (GPL-3.0 [bbep-lic]) or FastEPD, and decodes with PNGdec and JPEGDEC [tr-pio]. A fork stays GPL-3.0 as a whole [gpl3], so it cannot sit in this repo under ADR 0001 as written [adr1].
-- **ESPHome** (C++ runtime GPLv3; Python and everything else MIT [esphome-lic]). Configured in YAML. It has a captive-portal fallback after a minute without Wi-Fi [eh-portal], Improv over serial [eh-improv], OTA [eh-ota], GPIO keys with debounce filters [eh-gpio], deep sleep with a wake pin [eh-sleep], and drivers for the E1001, E1003 and Inkplate 10 [eh-epaper] [eh-it8951] [eh-inkplate]. Our YAML can be MIT, but any firmware built from it contains GPLv3 code.
-- **GxEPD2** (GPL-3.0 [gx-lic]) and **Seeed_GxEPD2** (GPL-3.0 [sgx-lic]). SPI panel drivers with partial windows [gx-bw], and no networking. Our source can stay MIT, but a binary handed to anyone is GPL-3.0 as a whole [gpl-faq-lib].
-- **Seeed_GFX** (MIT, BSD and FreeBSD notices [sgfx-lic]) and its successor **Seeed_GFX2** 1.0.0 (MIT [sgfx2-lic]). Arduino libraries [sgfx2-lib] with profiles for the reTerminal E1001 to E1004, "Full and partial refresh, fast refresh", and an optional UI layer with "input handling" [sgfx2]. No networking. Permissive throughout.
-- **FastEPD** (Apache-2.0 [fastepd-lic]). Parallel and IT8951 panels, the Inkplate 10 and TRMNL X among them, with full and row-band partial updates [fastepd] [fastepd-h]. Compatible with MIT.
-- **epdiy** (LGPL-3.0 firmware, CC BY-SA 4.0 board, MIT utilities [epdiy]). A parallel driver for ESP-IDF and Arduino, for its own boards and the LilyGo T5 S3 Pro; it has no Inkplate board definition [epdiy-boards]. MIT source can link it, with the LGPL duties below on binaries.
-- **Inkplate library** (LGPL-3.0 [ink-lic]). The Inkplate 10 driver with 1-bit partial updates [ink-drv] and web image helpers [prior]. Same LGPL duties.
-- **Bare ESP-IDF** (Apache-2.0 [idf-lic]). Wi-Fi and power management, `network_provisioning` (moved to the component registry in v6.0 [idf-prov]), HTTPS OTA [idf-ota], and the HTTP, WebSocket and MQTT clients above. No e-paper driver ships with it. The Arduino-ESP32 core on top of it is LGPL-2.1 [ard-lic].
+- **ESPHome** (C++ runtime GPLv3; Python and everything else MIT [esphome-lic]). Configured in YAML. It has a captive-portal fallback after a minute without Wi-Fi [eh-portal], Improv over serial [eh-improv], OTA [eh-ota], GPIO keys with debounce filters [eh-gpio], deep sleep with a wake pin [eh-sleep], and drivers with partial refresh for the E1001, E1003 and Inkplate 10 (section 3). Our YAML can be MIT, but any firmware built from it contains GPLv3 code.
+- **GxEPD2** (GPL-3.0 [gx-lic]) and **Seeed_GxEPD2** (GPL-3.0 [sgx-lic]). SPI panel drivers with partial windows [gx-bw]: no provisioning, OTA or key handling. Our source can stay MIT, but a binary handed to anyone is GPL-3.0 as a whole [gpl-faq-lib].
+- **Seeed_GFX** (MIT, BSD and FreeBSD notices [sgfx-lic]) and its successor **Seeed_GFX2** 1.0.0 (MIT [sgfx2-lic]). Arduino libraries [sgfx2-lib] with profiles for the reTerminal E1001 to E1004, "Full and partial refresh, fast refresh", and an optional UI layer with "input handling" [sgfx2]. No provisioning or OTA. Permissive throughout.
+- **FastEPD** (Apache-2.0 [fastepd-lic]). Parallel and IT8951 panels, the Inkplate 10 and TRMNL X among them, with full and row-band partial updates [fastepd] [fastepd-h]: a panel driver only. Compatible with MIT.
+- **epdiy** (LGPL-3.0 firmware, CC BY-SA 4.0 board, MIT utilities [epdiy]). A parallel panel driver for ESP-IDF and Arduino that updates partial screen regions [epdiy], for its own boards and the LilyGo T5 S3 Pro; it has no Inkplate board definition [epdiy-boards]. MIT source can link it, with the LGPL duties below on binaries.
+- **Inkplate library** (LGPL-3.0 [ink-lic]). The Inkplate 10 driver with 1-bit partial updates [ink-drv], and web image helpers [prior]. Its network helpers join Wi-Fi with credentials passed in code, download over HTTP(S) and read NTP time [ink-net]; there is no provisioning portal or OTA in it. Same LGPL duties.
+- **Bare ESP-IDF** (Apache-2.0 [idf-lic]). Wi-Fi and power management, `network_provisioning` (moved to the component registry in v6.0 [idf-prov]), HTTPS OTA [idf-ota], GPIO wake for keys [idf-sleep], and the HTTP, WebSocket and MQTT clients above. No path in its tree mentions e-paper [idf-tree], so the panel driver comes from one of the libraries above. Compatible with MIT. The Arduino-ESP32 core on top of it is LGPL-2.1 [ard-lic].
 
 What the licence texts say:
 
@@ -104,9 +104,9 @@ Latency and power are computed from the sourced inputs above, for a 1-bit frame;
 | Option | Key press to frame (E1001) | Power while awake (2 h, Espressif's figures) | Firmware complexity | Licence consequences |
 |---|---|---|---|---|
 | Reference: wake from deep sleep per press, as TRMNL does | About 10.5 s [tr-readme] | 0.186 mAh a press, measured on TRMNL's board; 8 mAh for 44 presses | Exists | GPL-3.0 if forked |
-| A. Round trip per key press | 0.46 s plus the LAN round trip and server time; up to 0.9 s if the panel was off and the reply missed the 50 ms window at DTIM 3 | Reply latency matters, so DTIM 1: 4.9 mAh in auto light sleep, 41–80 mAh in modem sleep | Lowest: TRMNL's contract plus the key pressed | Any base; the quick start, a TRMNL fork, is GPL-3.0 |
+| A. Round trip per key press | 0.46 s plus the LAN round trip and server time. Powering the panel on adds 0.13 s; a reply that misses the 50 ms window adds up to 0.3 s at DTIM 3 | Reply latency matters, so DTIM 1: 4.9 mAh in auto light sleep, 41–80 mAh in modem sleep | Lowest: TRMNL's contract plus the key pressed | Any base; the quick start, a TRMNL fork, is GPL-3.0 |
 | B. Prefetched frames | 0.44–0.57 s, from memory | Replies leave the critical path, so the radio can wake every 10 beacons (Espressif's DTIM 10 case): about 1.9 mAh, plus 2–3 frames fetched per press | Medium: a cache keyed by session state, its invalidation, a PSRAM budget | Custom firmware; MIT possible |
-| C. Rendering on the terminal | Panel time plus local drawing (UNVERIFIED) | Wi-Fi only to sync; light sleep with it off is 0.38 mA with PSRAM [ds-s3] | Highest: fonts, layout and a second renderer held to the same 1-bit checks | Adds a graphics stack: LVGL [lvgl-lic] or Seeed_GFX2 (MIT); GxEPD2 or bb_epaper make it GPL-3.0 |
+| C. Rendering on the terminal | Panel time plus local drawing (UNVERIFIED) | Wi-Fi only to sync; light sleep with it off is 0.38–0.44 mA with 8 MB of PSRAM [ds-s3] | Highest: fonts, layout and a second renderer held to the same 1-bit checks | Adds a graphics stack: LVGL [lvgl-lic] or Seeed_GFX2 (MIT); GxEPD2 or bb_epaper make it GPL-3.0 |
 | D. Hybrid: B plus timers and buzzer on the terminal | As B; timers count and ring with Wi-Fi down | As B | Medium-high: B plus a small renderer for the timer area | As B, plus a font renderer |
 
 **A. Round trip per key press.** The terminal sends the key it read. The server's conductor picks what comes next, and the server answers with the frame, as raw 1-bit, as PNG, or as only the changed rectangle. This is TRMNL's pull contract plus key identity [prior], and TRMNL X already runs it for 20 s after a tap [tr-touch-h]. Latency is the panel's plus about 23 ms of transfer and decode at 800×480, or about 155 ms at 1872×1404, plus the LAN round trip and the render. A reply later than 50 ms after the request waits up to one DTIM interval, unless the terminal turns power save off for the exchange [idf-wifi-perf]. On the same arithmetic the Inkplate 10 lands near 0.7–1.0 s and TRMNL X near 0.4–0.7 s, from their published refresh times [hw]. Wi-Fi must stay associated all session, and a drop freezes the last frame. Timer alarms need either a push channel, which pays the DTIM delay, or option D.
@@ -142,6 +142,7 @@ On the chosen board, with fixture frames:
 - Whether a stock Arduino-ESP32 build can use auto light sleep. `CONFIG_PM_ENABLE` defaults to off [idf-pm-kconfig], and the Arduino library builder's configs do not set it [ard-lib], but the shipped `sdkconfig` was not checked.
 - Auto light sleep with Wi-Fi held for hours on the ESP32-S3 boards. The only hang report found is TRMNL's, on an ESP32-C5.
 - Long polling on ESP-IDF and Arduino: no primary source was read.
+- TLS handshake time on the ESP32 and ESP32-S3, for HTTPS or a secure WebSocket after a reconnect: not researched.
 - The access point's beacon interval. The delays above assume 100 TU.
 - Drawing time for option C, and LVGL's fit for 1-bit e-paper; only its licence was read.
 - The Inkplate 10's PSRAM size [hw].
@@ -174,6 +175,7 @@ On the chosen board, with fixture frames:
 [idf-ota]: https://github.com/espressif/esp-idf/blob/ad20ded62a2d67a26e501fdc1905f43ba7ad6c81/docs/en/api-reference/system/esp_https_ota.rst
 [idf-prov]: https://github.com/espressif/esp-idf/blob/ad20ded62a2d67a26e501fdc1905f43ba7ad6c81/docs/en/migration-guides/release-6.x/6.0/provisioning.rst
 [idf-lic]: https://github.com/espressif/esp-idf/blob/ad20ded62a2d67a26e501fdc1905f43ba7ad6c81/LICENSE
+[idf-tree]: https://github.com/espressif/esp-idf/tree/ad20ded62a2d67a26e501fdc1905f43ba7ad6c81
 [ws-h]: https://github.com/espressif/esp-protocols/blob/08d93b7a5cecd89645283a73de4491c6bbea415a/components/esp_websocket_client/include/esp_websocket_client.h
 [ws-c]: https://github.com/espressif/esp-protocols/blob/08d93b7a5cecd89645283a73de4491c6bbea415a/components/esp_websocket_client/esp_websocket_client.c
 [mqtt-h]: https://github.com/espressif/esp-mqtt/blob/fe392196a6cf34a8748ca7eb22a255cca09a2961/include/mqtt_client.h
@@ -214,6 +216,7 @@ On the chosen board, with fixture frames:
 [epdiy]: https://github.com/vroland/epdiy/blob/42c16127dc5d4bca15e830624f22666ad914575f/README.md
 [epdiy-boards]: https://github.com/vroland/epdiy/tree/42c16127dc5d4bca15e830624f22666ad914575f/src/board
 [ink-drv]: https://github.com/SolderedElectronics/Inkplate-Arduino-library/blob/3c15d3275bb3b5c0d4b0ea8d79d87a8380a94554/src/boards/Inkplate10/Inkplate10Driver.cpp
+[ink-net]: https://github.com/SolderedElectronics/Inkplate-Arduino-library/blob/3c15d3275bb3b5c0d4b0ea8d79d87a8380a94554/src/system/NetworkController/NetworkController.h
 [ink-lic]: https://github.com/SolderedElectronics/Inkplate-Arduino-library/blob/3c15d3275bb3b5c0d4b0ea8d79d87a8380a94554/LICENSE
 [lvgl-lic]: https://github.com/lvgl/lvgl/blob/21e12253117d4aba82789e3c6b35231ab933c86e/LICENCE.txt
 
