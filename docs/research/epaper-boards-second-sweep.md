@@ -13,7 +13,7 @@ Checked 2026-11-20. Every price and stock status was read on that date. Buyer lo
 1. **Two candidates qualify, both new:** the LaskaKit Live-7.x-Pro (7.5″) and the Visionect Place & Play 13 (13.3″). Neither displaces a first-note pick on the whole brief (my reading): LaskaKit lacks the E1001's buzzer, RTC and wake key; Visionect has no inputs and closed firmware.
 2. **Visionect publishes "750 ms (4-bit full screen) - 100 ms (1-bit partial)"** [vis-pp13-docs], faster than any device of 7.5″ or more in the first note (TRMNL X: ≤200 ms) [first-note], and ships a magnetic mount. It has no buttons or touch, closed firmware, a per-device licence and costs €899 excl. tax [vis-pp13-shop].
 3. **LaskaKit's kit uses the reTerminal E1001's panel** (GDEY075T7, partial 0.3 s per the panel maker [gd-gdey075t7]) with a 6000 mAh battery and three buttons that cannot wake the board [laskakit-live] [laskakit-frame-gh]. It was out of stock at €122.74 incl. VAT [laskakit-live].
-4. **Three of the four TRMNL targets are small:** Xteink X4 (4.26″), Xteink X3 (3.68″), Zectrix Note 4 (4.2″). **`trmnl_gen2` is a 7.5″ TRMNL OG on an ESP32-C5** that TRMNL's spec sheet does not list [trmnl-pio] [trmnl-board] [trmnl-og-spec].
+4. **Three of the four TRMNL targets are small:** Xteink X4 (4.3″), Xteink X3 (3.7″) [xteink], Zectrix Note 4 (4.2″) [zectrix-note4]. **`trmnl_gen2` is a 7.5″ TRMNL OG on an ESP32-C5** that TRMNL's spec sheet does not list [trmnl-pio] [trmnl-board] [trmnl-og-spec].
 5. **ESP32 boards for large parallel panels exist** (epdiy v7; EPDinky on an ESP32-P4), but neither publishes a refresh time, and stock was sold out or down to one [epdiy-tindie] [epdinky-tindie].
 
 ## 1. Comparison table
@@ -44,8 +44,8 @@ Same fields as the first note's tables 1a to 1c, transposed for two candidates.
 
 | Candidate | Facts | Why dropped |
 |---|---|---|
-| Xteink X4 (`xteink_x4`) | ESP32-C3; panel EP426, 800×480 [trmnl-pio] [trmnl-board]. Sold as a "4.3"" pocket e-reader from $59 [xteink] | Below 7.5″ |
-| Xteink X3 (`xteink_x3`) | ESP32-C3; panel EP368, 792×528 [trmnl-pio] [trmnl-board]. "3.7"" e-reader, $55 [xteink] | Below 7.5″ |
+| Xteink X4 (`xteink_x4`) | ESP32-C3; panel EP426, 800×480 [trmnl-pio] [trmnl-board]. Sold as a 4.3″ pocket e-reader from $59 [xteink] | Below 7.5″ |
+| Xteink X3 (`xteink_x3`) | ESP32-C3; panel EP368, 792×528 [trmnl-pio] [trmnl-board]. Sold as a 3.7″ e-reader, $55 [xteink] | Below 7.5″ |
 | Zectrix Note 4 (`zectrix_note4`) | ESP32-S3 N16R8, "4.2-inch", 400×300, "2,000+ mAh", $54.99, "AVAILABLE NOW" [zectrix-note4]; panel EP42C in the firmware [trmnl-board] | Below 7.5″ |
 | TRMNL OG second generation (`trmnl_gen2`) | ESP32-C5 (board `esp32c5_n8r4`), BQ25616 charger, BQ27427 battery gauge, the TRMNL OG's 7.5″ 800×480 panel set (`EPD_75`), hostname "TRMNL-OG" [trmnl-pio] [trmnl-board] [trmnl-config]. The OG spec sheet lists only "TRMNL-OG-GEN1", on an ESP32-C3 [trmnl-og-spec] | Not announced or sold; same panel class as the TRMNL OG [first-note] |
 | Seeed Sticky (`seeed_sticky`) | ESP32-S3; panel EP397, 800×480 (3.97″) [trmnl-pio] [trmnl-board] | Below 7.5″ |
@@ -53,7 +53,9 @@ Same fields as the first note's tables 1a to 1c, transposed for two candidates.
 | Seeed OpenDisplay 7.3″ Color Kit | Spectra 6: "A full Spectra 6 refresh takes about 15–20 seconds"; BLE only [seeed-od73] | Colour, slow |
 | EKOS (Kickstarter) | ESP32-S3 N16R8; supported panels start with the GDEY075T7 [ekos-docs]; "7.5-inch e-paper display with integrated touchscreen panel" [ekos-site]. Campaign "successful": €19,054 from 82 backers; both rewards closed, estimated delivery December 2026, no late pledges [ekos-ks] | Cannot be bought today |
 | LaskaKit ESPink v3.6 | ESP32-S3 N16R8, LiPo charging, 16 µA deep sleep (v3.5); panel switch settings include GDEY075T7 and GDEM102T91 (10.2″). 498 CZK, out of stock [laskakit-espink] [laskakit-espink-gh] | Bare board, no buttons listed. The GDEM102T91 is ≈113 ppi (computed) and 800 ms partial in GxEPD2 [first-note] |
-| epdiy v7 | ESP32-S3 N16R8 and an RTC; drives the 13.3″ ED133UT2 and "All 9.7"" 1200×825 panels. $69, "Sold out since Nov 15, 2026", ships from Spain [epdiy-tindie] | No published refresh time; bare board |
+| LaskaKit ESPink-Dually | ESP32-S3 board; its example drives the red, black and white 12.48″ GDEY1248Z51 (1304×984) [laskakit-dually-gh]. GxEPD2's mono 12.48″ class (GDEW1248T3) sets 4600 ms full and 1600 ms partial [gx-1248] | Colour panel in the example; the mono 12.48″ panel is 1.6 s partial |
+| Other LaskaKit ESPink kits | ESPink-4.26, ESPink-4.2, ESPink-Shelf-2.9 and ESPink-Shelf-2.13 [laskakit-426-gh] | Below 7.5″ |
+| epdiy v7 | ESP32-S3 N16R8 and an RTC; drives the 13.3″ ED133UT2 and all 9.7″ 1200×825 panels. $69, "Sold out since Nov 15, 2026", ships from Spain [epdiy-tindie] | No published refresh time; bare board |
 | EPDinky | ESP32-P4 with an ESP32-C6 for Wi-Fi, TP4056 charger, RV-3028-C7 RTC; panels include ED097TC2 (1200×825), ES133TT3 (2200×1650), ED115OC1 (2760×2070). Runs FastEPD. $74.90, "Only 1 left in stock", ships from Spain [epdinky-tindie]. FastEPD's README states no timings [fastepd] | No published refresh time; bare board |
 | Adafruit 7.5″ mono (6396) with eInk Breakout Friend | Bare UC8179 panel, $59.95, out of stock, no refresh claims [ada-6396]. Adafruit_EPD drives it with a 3000 ms refresh delay and no partial mode [ada-epd-750]; its fast mode is enabled only for SSD1680 panels [ada-epd-1680] | Bare panel; no partial refresh in Adafruit's library |
 | Adafruit EYESPI breakouts, MagTag | Nothing of 5″ or more in Adafruit's eInk category except bare panels and Pimoroni's colour Inky boards [ada-eink]. MagTag: 2.9″, ESP32-S2, out of stock [ada-magtag] | Below 7.5″ |
@@ -107,6 +109,9 @@ All loaded 2026-11-20.
 [laskakit-frame-gh]: https://github.com/LaskaKit/ESPink-Frame-7x
 [laskakit-espink]: https://www.laskakit.cz/laskakit-espink-esp32-e-paper-pcb-antenna/
 [laskakit-espink-gh]: https://github.com/LaskaKit/ESPink
+[laskakit-dually-gh]: https://github.com/LaskaKit/ESPink-Dually/blob/82864250c6910896dd89185a012cb6e509f7faf4/SW/GDEY1248Z51_GxEPD2/GDEY1248Z51_GxEPD2.ino
+[laskakit-426-gh]: https://github.com/LaskaKit/ESPink-426/blob/5ebae1dbcf636504581011f7e43c2439b17e2fba/README.md
+[gx-1248]: https://github.com/ZinggJM/GxEPD2/blob/de82887e77a78528ea386e68bba2cb0291d2c319/src/epd/GxEPD2_1248.h#L23-L33
 [gd-gdey075t7]: https://www.good-display.com/product/396.html
 [vis-pp13-docs]: https://docs.visionect.com/PlaceAndPlay/Devices/PP13.html
 [vis-pp13-shop]: https://www.visionect.com/product/place-and-play-13/
