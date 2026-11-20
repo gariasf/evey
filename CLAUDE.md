@@ -53,6 +53,8 @@ Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/a
 
 Not decided yet. The Foundations and ladder map (#2) decides the terminal's hardware platform, the server and the data store, each as an ADR. Until then, no dependency is added.
 
+The backoffice is built, not adopted; other recipe tools lend ideas, never AGPL code (ADR 0003).
+
 ## Public code, private data
 
 The repo is public under MIT. Recipe content and the owner's data stay out of it (ADR 0001).

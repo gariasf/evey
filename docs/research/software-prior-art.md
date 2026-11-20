@@ -1,6 +1,6 @@
 # Software prior art: backoffice, recipe format, device protocol
 
-Checked 2026-11-20. Facts come from source repositories read at the pinned commits linked below, first-party docs, specs and original papers. Anything not confirmed that way is marked UNVERIFIED and collected at the end.
+Checked 2026-11-20. Facts come from source repositories read at the pinned commits linked below, first-party docs, specs and original papers. Anything not confirmed that way is marked UNVERIFIED and collected at the end. The backoffice rows (step models, planners, licences, Grocy's API, extension fields) were source-checked again on 2026-11-20 for ADR 0003.
 
 **How strong the evidence is.** Strong for the four recipe managers, Cooklang and TRMNL: all read from source. Medium for recipe-graph research: two papers read in full, one abstract. Thin for commercial products: only Samsung and Google were checked. The research on following recipes while cooking is in a separate file, [ux-cooking-research.md](./ux-cooking-research.md).
 
@@ -14,6 +14,7 @@ The deciding facts:
 
 - **None of the four stores a step-to-step dependency.** Mealie and Tandoor link a step to ingredients only [M-step], [T-models]. Grocy and KitchenOwl keep the method as one text field [G-recipeform], [K-recipe]. The tabular rendering and the session planner both need that structure, so it would live outside the adopted tool anyway.
 - **None has a multi-dish planner with equipment limits.** No such feature appears in any model or doc read here. The nearest thing is Mealie's "tools on hand" filter [M-sugg].
+- **Two of them could only store a tree as an opaque string.** Mealie recipes carry `extras`, string key/value pairs read and written through the API [M-extras], and Grocy has multi-line text userfields on recipes [G-userfields], [G-api]. Either holds a serialised step tree per recipe, but neither app's UI, search or validation would understand it, so adopting one buys storage only.
 - **The inventory you want is the cheap part.** Mealie and Tandoor answer "can I make this" from presence, not quantities: an on-hand flag per food, or in Tandoor any pantry entry above zero [M-sugg], [T-avail]. That is one table and one query.
 - **Grocy's stock model is the only complete one, and it costs upkeep.** An ingredient counts as fulfilled only when the stock amount covers the scaled recipe amount [G-0249], so every purchase and use has to be booked.
 - **Licences favour copying ideas, not code.** Grocy is MIT [G-repo]. Mealie and KitchenOwl are AGPL-3.0 [M-repo], [K-repo]. Tandoor is AGPL-3.0 plus the Commons Clause [T-license].
@@ -97,7 +98,7 @@ Release dates and licences are from each repository's GitHub metadata [G-repo], 
 
 ### Mealie
 
-- **Step model.** `RecipeStep` has `title`, `summary`, `text`, `ingredient_references`, `note_references` and `duration_seconds` [M-step]. Nothing points at another step.
+- **Step model.** `RecipeStep` has `id`, `title`, `summary`, `text`, `ingredient_references`, `note_references` and `duration_seconds` [M-step]. Nothing points at another step.
 - **Sub-recipes.** An ingredient can carry a `referenced_recipe` [M-ingr].
 - **Scaling and equipment.** "Each recipe on your meal plan has its own serving size." Tools are a recipe-level organiser, "like a pressure cooker or a sous vide" [M-features].
 - **Shopping.** Lists are grouped by labels: "You may want to Label by Food Type (Frozen, Fresh, etc), by Store, Tool, Recipe, or more" [M-features].
@@ -112,7 +113,7 @@ Release dates and licences are from each repository's GitHub metadata [G-repo], 
 
 ### Tandoor
 
-- **Step model.** `Step` has `instruction`, `ingredients` (many-to-many), `time`, `order` and `step_recipe` [T-models]. A step can embed another recipe, and a food can point to a recipe. No step refers to another step, and the file has no equipment model.
+- **Step model.** `Step` has `name`, `instruction`, `ingredients` (many-to-many), `time`, `order`, `file`, two display flags and `step_recipe` [T-models]. A step can embed another recipe, and a food can point to a recipe. No step refers to another step, and the file has no equipment model.
 - **Scaling and meal plan.** Recipes and meal-plan entries carry `servings` [T-models]. Release 2.4.0 added "scale recipe to specific ingredient amount" [T-rel-240].
 - **Timer.** A step with a time shows a button that starts a countdown of `step.time * 60` seconds [T-stepview].
 - **Pantry.** Added in 2.6.0 (2026-03-26): "configure multiple locations (freezer, shelf, ...) where you book foods in, out and inbetween" and "track expiry dates for different foods". The same notes say "integrations with shopping/planning and cooking are planned for the future" [T-rel-260]. The models are `InventoryLocation`, `InventoryEntry` (amount, unit, food, `expires`) and `InventoryLog` [T-models].
@@ -352,6 +353,7 @@ Skylight, Echo Show, restaurant kitchen display systems and pantry-based recipe 
 [G-0043]: https://github.com/grocy/grocy/blob/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/migrations/0043.sql
 [G-0247]: https://github.com/grocy/grocy/blob/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/migrations/0247.sql
 [G-0249]: https://github.com/grocy/grocy/blob/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/migrations/0249.sql
+[G-userfields]: https://github.com/grocy/grocy/blob/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/services/UserfieldsService.php#L20
 [G-api]: https://github.com/grocy/grocy/blob/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/grocy.openapi.json
 [G-config]: https://github.com/grocy/grocy/blob/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/config-dist.php
 [G-migrations]: https://github.com/grocy/grocy/tree/146f73af47fe65f806b6eea0ac5f3bee7cb62cb5/migrations
@@ -365,6 +367,7 @@ Skylight, Echo Show, restaurant kitchen display systems and pantry-based recipe 
 
 [M-repo]: https://github.com/mealie-recipes/mealie
 [M-models]: https://github.com/mealie-recipes/mealie/tree/d17d11a65ba50a59f106cdb44a4304456bc880d9/mealie/db/models
+[M-extras]: https://github.com/mealie-recipes/mealie/blob/d17d11a65ba50a59f106cdb44a4304456bc880d9/mealie/schema/recipe/recipe.py#L137
 [M-step]: https://github.com/mealie-recipes/mealie/blob/d17d11a65ba50a59f106cdb44a4304456bc880d9/mealie/schema/recipe/recipe_step.py
 [M-ingr]: https://github.com/mealie-recipes/mealie/blob/d17d11a65ba50a59f106cdb44a4304456bc880d9/mealie/schema/recipe/recipe_ingredient.py
 [M-sugg-schema]: https://github.com/mealie-recipes/mealie/blob/d17d11a65ba50a59f106cdb44a4304456bc880d9/mealie/schema/recipe/recipe_suggestion.py
