@@ -34,7 +34,7 @@ _Avoid_: sample recipe, dummy recipe
 Where the corpus and the owner's data live, outside the public repo.
 
 **Step**:
-One action in a recipe. Its inputs are ingredients and the results of earlier steps.
+One instruction in a recipe. Its inputs are ingredients and the results of earlier steps.
 
 **Step tree**:
 The shape a recipe's steps form through their inputs, ending in the finished dish.
