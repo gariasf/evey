@@ -55,6 +55,8 @@ Not decided yet. The Foundations and ladder map (#2) decides the terminal's hard
 
 The backoffice is built, not adopted; other recipe tools lend ideas, never AGPL code (ADR 0003).
 
+The server runs at home as one Linux container; the phone reaches it away from home over Tailscale, never the public internet (ADR 0004).
+
 ## Public code, private data
 
 The repo is public under MIT. Recipe content and the owner's data stay out of it (ADR 0001).
