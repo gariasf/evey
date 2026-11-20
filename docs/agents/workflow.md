@@ -6,7 +6,7 @@ The owner decides what is worked on. Agents implement, commit, open PRs and merg
 
 A PR waits for the owner in two cases:
 
-- **A physical or visual check:** something on the real device, a screen to judge, or a check only the owner can run.
+- **A physical or visual check:** something on the real terminal, a screen to judge, or a check only the owner can run.
 - **A roadmap decision:** milestone order or exit criteria, a new or superseded ADR, a new dependency or version bump, or money spent on hardware.
 
 Any other choice the agent makes itself and states, with its reason, in the PR body. A decision that lives only in chat is not made. It lands as an ADR (`docs/adr/`), a comment on a map issue, or a ticket comment.
@@ -35,7 +35,7 @@ Any other choice the agent makes itself and states, with its reason, in the PR b
 - **Verification seam.** Every ticket carries one, agreed before coding (`/tdd`).
 - **One ticket per session.** Start from the ticket body, its linked ADRs and `GLOSSARY.md`. Chat history is not a source.
 - **Start here.** Every ticket has this section: the files a session reads first, and what is already ruled out. The form is in `docs/agents/issue-tracker.md`.
-- **Technique and product decisions** are blocked by a `wayfinder:research` ticket titled "State of the art: …". Examples: display hardware, the device protocol, a data format, adopting an existing tool.
+- **Technique and product decisions** are blocked by a `wayfinder:research` ticket titled "State of the art: …". Examples: display hardware, the terminal–server protocol, a data format, adopting an existing tool.
   - It surveys primary sources: manufacturer documentation, datasheets, specs, source repositories and papers.
   - It ends in options, not a decision.
   - It stays compact in `docs/research/`: one comparison table and at most a paragraph per option.
@@ -44,7 +44,7 @@ Any other choice the agent makes itself and states, with its reason, in the PR b
   - It is answered on a prototype branch that is pushed and never merged, with no PR.
   - Its answer and evidence (screenshots, renders, measurements) go in the ticket's resolution comment.
   - What the answer calls for is built afterwards, under its own ticket.
-- **Owner's hands.** Work that needs the physical device or the owner's hands is `ready-for-human`, or carries a precise checklist for the owner. Examples: buying parts, flashing a board for the first time, mounting it, judging a screen in the kitchen.
+- **Owner's hands.** Work that needs the physical terminal or the owner's hands is `ready-for-human`, or carries a precise checklist for the owner. Examples: buying parts, flashing a board for the first time, mounting it, judging a screen in the kitchen.
 
 ## PRs
 

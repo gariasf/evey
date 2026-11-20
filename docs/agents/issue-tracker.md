@@ -49,7 +49,7 @@ Rules for filling it in:
 
 - **Start here** names real paths and items, read from the code when the ticket is written. A ticket whose work is only docs or issues names those files instead. "Ruled out" may say "nothing yet".
 - **A ticket that changes what the terminal shows** names its screens. They are rendered at the panel's native resolution in 1-bit, from fixture recipes (ADR 0001).
-- **A ticket that needs the physical device** says what the owner checks, and how.
+- **A ticket that needs the physical terminal** says what the owner checks, and how.
 
 ## Pull requests as a triage surface
 
