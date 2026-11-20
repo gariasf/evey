@@ -35,7 +35,17 @@ If any of these conflicts with the current code, **the code is the source of tru
 
 ## Agent skills
 
-<!-- Written by /mattpocock-skills:setup-matt-pocock-skills: issue tracker, triage labels, domain docs. -->
+### Issue tracker
+
+GitHub Issues on `gariasf/evey`, via the `gh` CLI; wayfinder maps use sub-issues and native dependencies. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`); each label string equals its role name. `fog` marks a ticket placed at a later milestone's charting, off the triage queue and the frontier. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ## Stack
 
