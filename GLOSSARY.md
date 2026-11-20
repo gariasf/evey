@@ -76,6 +76,14 @@ _Avoid_: weekend session, prep session
 What picks the next step across a session's recipes, as the session runs, within the limits of the equipment.
 _Avoid_: scheduler
 
+**Step screen**:
+The terminal's screen during a session: the current step in large type with its quantities, the conductor's next steps, and the timer strip.
+_Avoid_: cook screen, card
+
+**Timer strip**:
+Every running walk-away step and its time left, visible throughout a session.
+_Avoid_: timer bar, timer list
+
 **Hands-on step**:
 A step that needs the cook throughout.
 _Avoid_: active step, attended step, stay-with-it
