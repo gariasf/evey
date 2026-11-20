@@ -18,8 +18,9 @@ The owner coordinates what is worked on. Agents implement, commit, open PRs and 
 
 ## Project posture
 
-- **Remove barriers to cooking.** A feature earns its place by making it easier to decide, shop, cook, or eat through the week with wet hands and a busy head. The evidence behind the device's design is in `docs/research/ux-cooking-research.md`.
-- **The device is real hardware.** A change to what the terminal shows isn't done until it has been checked at the panel's native resolution, in 1-bit.
+- **Remove barriers to cooking.** A feature earns its place by making it easier to decide, shop, cook, or eat through the week with wet hands and a busy head. The evidence behind the terminal's design is in `docs/research/ux-cooking-research.md`.
+- **Ask for no discipline.** The owner has to want to use evey. Every input it asks for costs something every week, so prefer what it can infer from actions already taken, defaults that age out safely, and one-press confirmations. Skipping an input never breaks anything.
+- **The terminal is real hardware.** A change to what the terminal shows isn't done until it has been checked at the panel's native resolution, in 1-bit.
 - **No throwaway code.** The one exception is a prototype ticket's branch, which is never merged (`docs/agents/workflow.md`, Tickets).
 - **Goals are explicit.** Work traces to a ticket in the live milestone.
 
@@ -27,7 +28,7 @@ The owner coordinates what is worked on. Agents implement, commit, open PRs and 
 
 - `docs/agents/workflow.md`: how work moves (ladder, tickets, PRs, session start). Read before starting, closing or reordering work.
 - `docs/agents/sessions.md`: which skill starts which kind of session.
-- `GLOSSARY.md`: the vocabulary of code, tickets and reviews. `/domain-modeling` creates it as terms are resolved.
+- `GLOSSARY.md`: the vocabulary of code, tickets and reviews. `/domain-modeling` adds to it as terms are resolved.
 - `docs/adr/`: decisions that are hard to reverse. A change that contradicts one says so.
 - `docs/research/`: cited research notes, linked from tickets so each is read once.
 
@@ -49,7 +50,7 @@ Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/a
 
 ## Stack
 
-Not decided yet. The Foundations and ladder map decides the device platform, the server and the data store, each as an ADR. Until then, no dependency is added.
+Not decided yet. The Foundations and ladder map (#2) decides the terminal's hardware platform, the server and the data store, each as an ADR. Until then, no dependency is added.
 
 ## Public code, private data
 
@@ -58,7 +59,7 @@ The repo is public under MIT. Recipe content and the owner's data stay out of it
 - **Never commit recipe content.** That means ingredients, quantities, steps and notes, from any source.
   - It lives in the private corpus and is loaded at runtime.
   - Tests, examples and PR images use invented fixture recipes.
-- **Never commit the owner's data.** That covers kitchen equipment, shops, pantry, leftovers and plans. The scheduler and the shopping list read these as data from the private store.
+- **Never commit the owner's data.** That covers kitchen equipment, shops, pantry, leftovers and plans. The conductor and the shopping list read these as data from the private store.
 - **Nothing private on any branch, issue or PR.** That covers secrets and tokens, and also personal details.
 
 ## Domain rules (carried over from japanese-batch-kitchen)
