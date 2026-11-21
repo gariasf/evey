@@ -18,6 +18,10 @@ _Avoid_: admin, dashboard, web app
 What renders the terminal's frames, runs sessions and the conductor, and serves the backoffice.
 _Avoid_: backend, hub
 
+**Frame**:
+One terminal screen as the server renders it: a 1-bit image at the panel's native resolution.
+_Avoid_: screenshot, image, render
+
 ### Recipes
 
 **Recipe**:
