@@ -118,16 +118,28 @@ _Avoid_: tool, gadget
 ### Stock
 
 **Pantry**:
-The ingredients on hand, wherever they are kept. Leftovers are not part of it.
+The ingredients on hand, wherever they are kept, each simply in or out, never counted. Leftovers are not part of it.
 _Avoid_: inventory, stock
 
 **Staple**:
-A pantry ingredient assumed to be in stock until it is flagged out.
+A pantry ingredient assumed to be in stock until it is flagged out. Flagging it out puts it on the shopping list.
 _Avoid_: basic, essential
 
+**Fresh ingredient**:
+A pantry ingredient that is in stock only once bought, and leaves when a session uses it or its shelf life runs out.
+_Avoid_: perishable
+
+**Shelf life**:
+How long a fresh ingredient stays in the pantry after it comes in.
+_Avoid_: expiry
+
 **Leftover**:
-A cooked dish kept in the fridge or freezer to eat later, with an eat-by date.
+A cooked dish kept to eat later: in the fridge with an eat-by date, or in the freezer as a freezer leftover.
 _Avoid_: stored dish, meal prep
+
+**Freezer leftover**:
+A leftover kept in the freezer, dated by the day it was frozen. It leaves when thawed, finished, or months later.
+_Avoid_: frozen meal
 
 **Eat-by date**:
 The last day a leftover should be eaten.
