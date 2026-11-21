@@ -111,6 +111,10 @@ _Avoid_: passive step, unattended step
 A kitchen item that a step occupies while it runs, such as a frying pan, a pot, the oven or the air fryer.
 _Avoid_: tool, cookware
 
+**Round**:
+One pass of a step when the scaled food is more than its equipment holds at once. Each round repeats the step with its full timer.
+_Avoid_: batch (a batch is the session's multiplier)
+
 **Utensil**:
 An item a recipe needs that no step occupies, such as a grater or a mortar.
 _Avoid_: tool, gadget
