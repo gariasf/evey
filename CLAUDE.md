@@ -59,6 +59,8 @@ The terminal is a Seeed reTerminal E1001 running our own MIT firmware on Seeed_G
 
 The backoffice is built, not adopted; other recipe tools lend ideas, never AGPL code (ADR 0003).
 
+A recipe is one document: a step tree with stable ids, its source part and its labelled additions kept apart (ADR 0006).
+
 The server runs at home as one Linux container; the phone reaches it away from home over Tailscale, never the public internet (ADR 0004).
 
 The private store is one SQLite file on the server's data volume, the server its only writer, backed up nightly as a text dump to a private repo; recipes change only through import with review (ADR 0008).

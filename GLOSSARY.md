@@ -42,11 +42,17 @@ _Avoid_: sample recipe, dummy recipe
 Where the corpus and the owner's data live, outside the public repo: the server's database and its off-machine backup.
 _Avoid_: private corpus, private repo
 
+**Ingredient**:
+A food a recipe uses, known by the same name across recipes, the pantry and the shopping list.
+
 **Step**:
-One instruction in a recipe. Its inputs are ingredients and the results of earlier steps.
+One instruction in a recipe. Its inputs are ingredients and the results of earlier steps. Its result goes into exactly one later step, or is the finished dish.
 
 **Step tree**:
 The shape a recipe's steps form through their inputs, ending in the finished dish.
+
+**Sub-recipe**:
+A recipe whose dish is an ingredient of another recipe, cooked as a recipe of its own in the same session.
 
 **Process grid**:
 A recipe's step tree drawn as a table: ingredients down the left, each step a box spanning its inputs, merging rightward into the finished dish.
@@ -57,7 +63,7 @@ What tells the cook a step is finished, such as "until translucent".
 _Avoid_: doneness, until-condition
 
 **Addition**:
-Something this project adds to a recipe and labels as its own: a batch rating, keep time, shop routing, shelf name, air-fryer note or session ordering.
+Something this project adds to a recipe and labels as its own: a batch rating, keep time, servings estimate, air-fryer note or session ordering.
 
 **Adaptation**:
 A labelled change to a recipe so that it keeps a diet rule.
@@ -103,7 +109,11 @@ _Avoid_: passive step, unattended step
 
 **Equipment**:
 A kitchen item that a step occupies while it runs, such as a frying pan, a pot, the oven or the air fryer.
-_Avoid_: utensil, tool, cookware
+_Avoid_: tool, cookware
+
+**Utensil**:
+An item a recipe needs that no step occupies, such as a grater or a mortar.
+_Avoid_: tool, gadget
 
 ### Stock
 
