@@ -54,7 +54,7 @@ People stop tracking food mainly because every entry costs effort, and a missed 
   - A staple that ran out midweek counts until it is flagged out.
   - A surviving half cabbage is hidden until it is toggled back.
 
-  Only the staple needs a press to put right; the others end on their own.
+  The leftover's error ends on its own at its eat-by date, and the cabbage's errs toward hiding a dish. Only the staple's offers something that is not there, until it is flagged out.
 - **ADR 0002's "eat one" is not offered.** That ADR left what it records to this decision. Every other press stays within its "at most one optional press".
 - **Grocy stays unused.** [ADR 0003](0003-the-backoffice-is-built-not-adopted.md) kept it as a fallback stock service in case counted quantities or barcode scanning were chosen. Neither was.
 - **What the recipe model must carry.** A keep time in whole days. Servings are not needed for the pantry or for leftovers.
