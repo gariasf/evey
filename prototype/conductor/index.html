@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PROTOTYPE · the conductor within equipment limits</title>
+<style>
+  :root { --ink:#1d1d1f; --mut:#6e6e73; --line:#e3e3e8; --bg:#fafafa; --acc:#c2410c; --acc2:#fde7d9; --ok:#2f6f3e; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  main { max-width:1180px; margin:0 auto; padding:28px 24px 60px; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:15px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); }
+  p { margin:.3em 0; } .mut { color:var(--mut); } small { color:var(--mut); }
+  .proto { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--acc); border:1px solid var(--acc); border-radius:4px; padding:1px 6px; margin-bottom:8px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-top:16px; }
+  .row { display:flex; gap:16px; flex-wrap:wrap; } .col { flex:1 1 300px; min-width:0; }
+  button { font:inherit; border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 12px; cursor:pointer; }
+  button:hover:not(:disabled) { border-color:var(--ink); } button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--acc); color:#fff; border-color:var(--acc); font-weight:600; }
+  .now { border-left:4px solid var(--acc); padding:8px 12px; background:var(--acc2); border-radius:6px; }
+  .now .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--acc); font-weight:700; }
+  .now .txt { font-size:20px; font-weight:600; margin:2px 0; }
+  .changed { background:#fff6c7; }
+  ul { margin:4px 0; padding-left:18px; } li { margin:2px 0; }
+  table { border-collapse:collapse; width:100%; } td, th { text-align:left; padding:3px 8px 3px 0; vertical-align:top; } th { color:var(--mut); font-weight:500; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .tabs button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .steps { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .steps button { font-size:13px; text-align:left; max-width:360px; }
+  .steps button.done { background:#eef6ef; border-color:#cfe5d3; color:var(--ok); }
+  input[type=number] { width:48px; font:inherit; padding:2px 4px; }
+  label { margin-right:12px; white-space:nowrap; }
+  .pick { columns:3 220px; } .pick label { display:block; }
+  svg text { font:11px system-ui, sans-serif; fill:var(--ink); }
+  .kpi { display:flex; gap:22px; flex-wrap:wrap; } .kpi div b { display:block; font-size:20px; }
+</style>
+</head>
+<body>
+<main>
+  <span class="proto">PROTOTYPE · THROWAWAY · NEVER MERGED</span>
+  <h1>The conductor within equipment limits</h1>
+  <p><b>The question.</b> Given recipes shaped as ADR 0006 says (steps with equipment, timers marked walk-away or hands-on, hands-on minutes spread over untimed steps), can a conductor run a session inside the kitchen's equipment, get the hot dishes to finish together, and keep the cook on one thing at a time? Press <b>Next</b> as the cook would. Every recipe here is invented; the kitchen is invented too.</p>
+  <p class="mut">Rules on trial: a vessel named by consecutive steps is held from the first to the last; a pot, pan, small pot or fryer also takes a burner; food goes on the heat only once its prep is ready; a hands-on step is never interrupted; when food on the hob will buzz soon, the cook gets a task that ends before it; dishes eaten now are held so their heat ends with the rest; a soak or marinade of 2 h or more happens the day before.</p>
+
+  <div class="card">
+    <h2>Guided walkthroughs</h2>
+    <div class="tabs" id="tabs"></div>
+    <div id="scenario"></div>
+  </div>
+
+  <div class="row">
+    <div class="card col" style="flex:2 1 520px">
+      <h2>Now <span id="clock" style="float:right;color:var(--ink)"></span></h2>
+      <div id="now"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="primary" id="bNext">Next</button>
+        <button id="bMove">Move (another step)</button>
+        <button id="bWait1">Wait 1 min</button>
+        <button id="bWaitBuzz">Wait for the next buzz</button>
+      </div>
+      <div id="then" style="margin-top:12px"></div>
+    </div>
+    <div class="card col">
+      <h2>Kitchen</h2>
+      <div id="equip"></div>
+      <h2 style="margin-top:14px">Timers</h2>
+      <div id="timers"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>The plan as the conductor sees it now</h2>
+    <div class="kpi" id="kpi"></div>
+    <div id="gantt" style="overflow-x:auto;margin-top:10px"></div>
+    <p class="mut">Solid: the cook's hands are busy. Light: a walk-away timer is running (the cook is free). Grey: done. Dashed line: now. Thin bars under each dish: the vessel it holds.</p>
+  </div>
+
+  <div class="card">
+    <h2>Not offered right now, and why</h2>
+    <div id="blocked"></div>
+  </div>
+
+  <div class="card">
+    <h2>Free play: session and kitchen</h2>
+    <div class="pick" id="pick"></div>
+    <p style="margin-top:10px" id="kitchenIn"></p>
+    <p><label>Cook speed <select id="speed"><option value="0.75">quick (×0.75)</option><option value="1" selected>as estimated</option><option value="1.5">slow (×1.5)</option><option value="2">much slower (×2)</option></select></label>
+      <label>Policy <select id="policy"><option value="evey">evey conductor</option><option value="greedy">device-ui greedy</option></select></label>
+      <button id="bReset">Start this session</button></p>
+  </div>
+</main>
+
+<script src="conductor.js"></script>
+<script src="fixtures.js"></script>
+<script src="corpus.local.js" onerror="void 0"></script>
+<script>
+// The page is a thin shell over conductor.js: it keeps a live session and asks the module what to show.
+const C = window.Conductor, FX = window.EVEY_FIXTURES;
+const Q = new URLSearchParams(location.search);
+const LIB = [...FX.RECIPES, ...(Q.has('fixtures') ? [] : window.EVEY_CORPUS || [])];
+const byId = id => LIB.find(r => r.id === id);
+const fmt = C.fmt, esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+const SCENARIOS = [
+  { name: 'Batch afternoon', dishes: [['braise', 1], ['greens', 1], ['pickle', 1], ['omelette', 1]], kitchen: {},
+    text: 'Four dishes for the fridge. Watch the braise start first (its 40-minute simmer is the longest path), the pickle\'s 60-minute chill run after the session as "into the fridge", and the cook never get two things at once.' },
+  { name: 'One pan, two pan dishes', dishes: [['bowl', 1], ['omelette', 1], ['braise', 1], ['rice', 1]], kitchen: { pan: 1 },
+    text: 'The bowl, the omelette and the braise all need the frying pan; there is one. Watch "Not offered" say the pan is in use, and the pan bar pass from dish to dish. The bowl waits for the rice, a sub-recipe that cooks as a dish of its own.' },
+  { name: 'Dinner, all hot', dishes: [['cutlets', 1, true], ['soup', 1, true], ['braise', 1, true]], kitchen: {},
+    text: 'Everything is eaten now. The braise sets the end; the cutlets\' oil and the soup are held ("held until …") so they come off the heat with it. Compare with the device-ui greedy policy in free play.' },
+  { name: 'Two burners', dishes: [['braise', 1], ['greens', 1], ['soup', 1], ['cutlets', 1]], kitchen: { hob: 2 },
+    text: 'Only two burners for a pot, a small pot, a fryer and a pan. Watch "every burner is in use" and the preheat steps brought forward as soon as a burner frees.' },
+  { name: '×3 cutlets', dishes: [['cutlets', 3], ['greens', 1]], kitchen: {},
+    text: 'Three times the cutlets. Timers never scale, but the fryer takes one batch at a time, so the frying step runs in 3 rounds (15 to 18 minutes of hands-on frying instead of 5). The model has no field for this yet; the fixture marks it with perRound.' },
+  { name: 'A slow cook', dishes: [['braise', 1], ['cutlets', 1, true], ['greens', 1]], kitchen: {}, speed: 2,
+    text: 'The cook takes twice the estimated time on every untimed step. The conductor re-plans after every press, so the order adapts; watch the end time slide and whether a buzz lands while the cook is busy.' },
+];
+
+let cfg, L, tab = 0, script = [], scriptAt = 0, lastNowKey = null;
+
+function setup(c) {
+  cfg = c;
+  const session = c.dishes.map(([id, mult, eatNow]) => ({ recipe: byId(id), mult, eatNow: !!eatNow }));
+  const P = C.prepare(session, {});
+  L = { P, st: C.init(P), kitchen: { ...FX.KITCHEN, ...c.kitchen }, speed: c.speed || 1, policy: c.policy || 'evey', override: null, changed: '' };
+}
+function decision() {
+  const { P, st, kitchen } = L;
+  if (st.cookTask && st.cookUntil > st.t) return { busy: st.cookTask, legal: [], blocked: C.candidates(P, st, kitchen).blocked };
+  const d = C.decide(P, st, kitchen, L.policy);
+  return { ...d, pick: L.override && d.legal.includes(L.override) ? L.override : d.pick };
+}
+function nextEvent() {
+  const { P, st } = L;
+  const ends = Object.keys(st.status).filter(k => st.status[k] === 'run' && st.end[k] > st.t).map(k => st.end[k]);
+  const d = decision(); if (d.until > st.t) ends.push(d.until);
+  return ends.length ? Math.min(...ends) : null;
+}
+function act(kind) {
+  const { P, st } = L, before = snapshot();
+  if (kind === 'next') {
+    const d = decision();
+    if (d.busy) C.advance(P, st, st.cookUntil);
+    else if (d.pick) {
+      const t = P.tasks.get(d.pick), dur = t.kind === 'hands' ? t.est * L.speed : t.est;
+      C.start(P, st, d.pick, dur); C.advance(P, st, st.cookUntil);
+    } else { const e = nextEvent(); if (e != null) C.advance(P, st, e); }
+    L.override = null;
+  } else if (kind === 'move') {
+    const d = decision(); if (d.legal.length > 1) { const i = d.legal.indexOf(d.pick); L.override = d.legal[(i + 1) % d.legal.length]; }
+  } else if (kind === 'wait1') C.advance(P, st, st.t + 1);
+  else if (kind === 'buzz') { const e = nextEvent(); if (e != null) C.advance(P, st, e); }
+  L.changed = diff(before, snapshot());
+  render();
+}
+const snapshot = () => JSON.stringify({ s: L.st.status, u: L.st.inUse });
+function diff(a, b) { a = JSON.parse(a); b = JSON.parse(b); return Object.keys(b.s).filter(k => a.s[k] !== b.s[k]).join(','); }
+const sessionOver = () => Object.values(L.st.status).every(s => s === 'done');
+
+// ---------- rendering ----------
+function stepLabel(key) { const t = L.P.tasks.get(key); return `${esc(t.step.text)} <small>· ${esc(t.recipe.name)}${L.P.session[t.ri].mult > 1 ? ' ×' + L.P.session[t.ri].mult : ''}</small>`; }
+function kindLabel(t) {
+  const eq = t.kinds.length ? ' · ' + t.kinds.join(', ') : '';
+  if (t.kind === 'walk') return `walk-away timer ${t.step.timer.min}${t.step.timer.max > t.step.timer.min ? '–' + t.step.timer.max : ''} min${t.rounds > 1 ? ' × ' + t.rounds + ' rounds' : ''}${eq}`;
+  if (t.kind === 'handsTimer') return `hands-on timer ${t.step.timer.min}${t.step.timer.max > t.step.timer.min ? '–' + t.step.timer.max : ''} min${t.rounds > 1 ? ' × ' + t.rounds + ' rounds = ' + t.est + ' min' : ''}${eq}`;
+  return `about ${Math.round(t.est * 10) / 10} min of hands-on work (estimate)${eq}`;
+}
+function render() {
+  const { P, st, kitchen } = L;
+  document.getElementById('clock').textContent = fmt(st.t);
+  const d = decision(), over = sessionOver();
+  let now;
+  if (over) now = `<div class="now"><div class="lbl">Session done</div><div class="txt">Everything is cooked.</div></div>`;
+  else if (d.busy) { const t = P.tasks.get(d.busy); now = `<div class="now"><div class="lbl">Stay with it · ${fmt(st.cookUntil - st.t)} left</div><div class="txt">${stepLabel(d.busy)}</div><small>${kindLabel(t)}</small></div>`; }
+  else if (d.pick) { const t = P.tasks.get(d.pick); now = `<div class="now"><div class="lbl">${L.override ? 'Your choice (Move)' : 'Now'}</div><div class="txt">${stepLabel(d.pick)}</div><small>${kindLabel(t)}${t.kind === 'walk' ? ' · Next starts the timer and frees you' : t.kind === 'handsTimer' ? ' · Next starts the timer; stay with it' : ' · Next when done'}</small></div>`; }
+  else now = `<div class="now"><div class="lbl">Wait</div><div class="txt">Nothing to do until ${nextEvent() != null ? fmt(nextEvent()) : '…'}</div><small>Next skips to then.</small></div>`;
+  document.getElementById('now').innerHTML = now;
+  document.getElementById('bMove').disabled = !(d.legal && d.legal.length > 1);
+
+  // the forecast from here
+  const f = C.run(P, C.clone(st), kitchen, { policy: L.policy });
+  const order = f.st.log.filter(l => st.status[l.key] === 'todo').map(l => l.key).filter(k => k !== d.pick).slice(0, 2);
+  document.getElementById('then').innerHTML = order.length ? `<b>Then</b><ul>${order.map(k => `<li>${fmt(f.st.start[k])} · ${stepLabel(k)}</li>`).join('')}</ul>` : '';
+  const m = f;
+  document.getElementById('kpi').innerHTML = [
+    ['Session ends', fmt(m.makespan)], ['Cook busy', fmt(m.cookBusy)], ['Cook idle', fmt(m.idle)],
+    ['Food waits after a buzz (worst)', Math.round(m.afterBuzzMax) + ' min'], ['Hot dish waits (worst)', Math.round(m.coldMax) + ' min'],
+    ['Presses', m.presses - 2 + ' + 2'],
+  ].map(([a, b]) => `<div><small>${a}</small><b>${b}</b></div>`).join('');
+
+  // equipment
+  const kinds = Object.keys(kitchen).filter(k => kitchen[k] > 0);
+  const holder = k => [...P.tasks.values()].filter(t => t.kinds.includes(k) && (st.status[t.key] === 'run' || (st.status[t.key] === 'done' && t.chainNext[k] && st.status[t.chainNext[k]] !== 'done'))).map(t => t.recipe.name);
+  document.getElementById('equip').innerHTML = `<table>${kinds.map(k => { const u = st.inUse[k] || 0; return `<tr class="${L.changed && u ? '' : ''}"><th>${k}</th><td>${u} of ${kitchen[k]} in use</td><td><small>${k === 'hob' ? '' : esc([...new Set(holder(k))].join(', '))}</small></td></tr>`; }).join('')}</table>`;
+  const running = Object.keys(st.status).filter(k => st.status[k] === 'run' && P.tasks.get(k).kind === 'walk').sort((a, b) => st.end[a] - st.end[b]);
+  document.getElementById('timers').innerHTML = running.length ? `<ul>${running.map(k => `<li><b>${fmt(st.end[k] - st.t)}</b> · ${stepLabel(k)}</li>`).join('')}</ul>` : '<p class="mut">No walk-away timer running.</p>';
+  document.getElementById('blocked').innerHTML = d.blocked && d.blocked.length ? `<ul>${d.blocked.map(b => `<li>${stepLabel(b.key)}: <b>${esc(b.why)}</b></li>`).join('')}</ul>` : '<p class="mut">Every step whose inputs are ready could be started.</p>';
+  gantt(f.st);
+  renderScenario();
+}
+function gantt(fs) {
+  const { P, st } = L, rows = P.session.length, W = 1080, left = 170, rh = 34;
+  const end = Math.max(30, ...Object.values(fs.end)), sx = (W - left - 10) / end;
+  let s = `<svg width="${W}" height="${rows * rh + 24}" xmlns="http://www.w3.org/2000/svg">`;
+  for (let m = 0; m <= end; m += 10) s += `<line x1="${left + m * sx}" y1="0" x2="${left + m * sx}" y2="${rows * rh}" stroke="#eee"/><text x="${left + m * sx - 8}" y="${rows * rh + 14}" fill="#888">${fmt(m)}</text>`;
+  P.session.forEach((e, ri) => {
+    const y = ri * rh;
+    s += `<text x="0" y="${y + 15}">${esc(e.recipe.name.slice(0, 26))}${e.mult > 1 ? ' ×' + e.mult : ''}${e.eatNow ? ' · now' : ''}</text>`;
+    for (const t of P.tasks.values()) if (t.ri === ri && fs.start[t.key] != null && !t.before) {
+      const a = fs.start[t.key], b = Math.max(a + 0.3, fs.end[t.key]), stt = st.status[t.key];
+      const cookEnd = t.kind === 'walk' ? a + Math.min(C.START_MIN, t.est) : b;
+      const col = stt === 'done' ? '#bbb' : stt === 'run' ? '#c2410c' : '#e07a4a';
+      if (t.kind === 'walk') s += `<rect x="${left + a * sx}" y="${y + 4}" width="${(b - a) * sx}" height="14" fill="${stt === 'done' ? '#eee' : '#fde7d9'}" stroke="${col}" stroke-width=".6"><title>${esc(t.step.text)}</title></rect>`;
+      s += `<rect x="${left + a * sx}" y="${y + 4}" width="${Math.max(1.5, (cookEnd - a) * sx)}" height="14" fill="${col}"><title>${esc(t.step.text)}</title></rect>`;
+      for (const k of t.kinds) if (!t.chainPrev[k]) {
+        let tail = t; while (tail.chainNext[k]) tail = P.tasks.get(tail.chainNext[k]);
+        const e2 = fs.end[tail.key] ?? b;
+        s += `<rect x="${left + a * sx}" y="${y + 21}" width="${(e2 - a) * sx}" height="4" fill="#555" opacity=".55"><title>${k}</title></rect><text x="${left + a * sx}" y="${y + 33}" fill="#777" style="font-size:9px">${k}</text>`;
+      }
+    }
+  });
+  s += `<line x1="${left + st.t * sx}" y1="0" x2="${left + st.t * sx}" y2="${rows * rh}" stroke="#1d1d1f" stroke-dasharray="3 3"/></svg>`;
+  document.getElementById('gantt').innerHTML = s;
+}
+
+// ---------- walkthroughs: each step is the press the cook would make, labelled from a dry run ----------
+function buildScript(c) {
+  setup(c); const out = [];
+  for (let i = 0; i < 200 && !sessionOver(); i++) {
+    const d = decision();
+    out.push(d.busy ? `Stay with it → ${L.P.tasks.get(d.busy).step.text}` : d.pick ? `Next: ${L.P.tasks.get(d.pick).step.text}` : 'Next: wait for the buzz');
+    act('next');
+  }
+  setup(c); return out;
+}
+function startScenario(i) { tab = i; scriptAt = 0; script = buildScript(SCENARIOS[i]); render(); }
+function renderScenario() {
+  document.getElementById('tabs').innerHTML = SCENARIOS.map((s, i) => `<button class="${i === tab ? 'on' : ''}" onclick="startScenario(${i})">${esc(s.name)}</button>`).join('');
+  const s = SCENARIOS[tab];
+  document.getElementById('scenario').innerHTML = `<p>${esc(s.text)}</p><div class="steps">${script.map((l, i) => `<button class="${i < scriptAt ? 'done' : ''}" ${i === scriptAt ? '' : 'disabled'} onclick="scriptStep()">${i + 1}. ${esc(l)}</button>`).join('')}</div>`;
+}
+function scriptStep() { scriptAt++; act('next'); }
+
+// ---------- free play ----------
+function renderPick() {
+  document.getElementById('pick').innerHTML = LIB.map(r => `<label><input type="checkbox" data-id="${r.id}"> ${esc(r.name)} <select data-mult="${r.id}"><option>1</option><option>2</option><option>3</option></select> <input type="checkbox" data-now="${r.id}" ${r.batch === 1 ? 'checked' : ''}> eat now</label>`).join('');
+  document.getElementById('kitchenIn').innerHTML = Object.keys(FX.KITCHEN).map(k => `<label>${k} <input type="number" min="0" max="6" value="${FX.KITCHEN[k]}" data-k="${k}"></label>`).join('');
+}
+document.getElementById('bReset').onclick = () => {
+  const dishes = [...document.querySelectorAll('[data-id]:checked')].map(x => [x.dataset.id, +document.querySelector(`[data-mult="${x.dataset.id}"]`).value, document.querySelector(`[data-now="${x.dataset.id}"]`).checked]);
+  if (!dishes.length) return;
+  // a dish that uses another recipe brings it along
+  for (const [id] of dishes.slice()) for (const s of byId(id).steps) for (const u of s.uses || []) if (!dishes.some(d => d[0] === u)) dishes.push([u, 1, false]);
+  const kitchen = Object.fromEntries([...document.querySelectorAll('[data-k]')].map(x => [x.dataset.k, +x.value]));
+  script = []; scriptAt = 0;
+  setup({ dishes, kitchen, speed: +document.getElementById('speed').value, policy: document.getElementById('policy').value });
+  render();
+};
+document.getElementById('bNext').onclick = () => { script = []; act('next'); };
+document.getElementById('bMove').onclick = () => act('move');
+document.getElementById('bWait1').onclick = () => { script = []; act('wait1'); };
+document.getElementById('bWaitBuzz').onclick = () => { script = []; act('buzz'); };
+renderPick();
+startScenario(+(Q.get('s') || 0));
+for (let i = 0; i < +(Q.get('n') || 0); i++) scriptStep();
+</script>
+</body>
+</html>

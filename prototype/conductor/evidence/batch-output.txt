@@ -1,0 +1,120 @@
+Conductor prototype over the corpus: aggregates only. Minutes; med = median, p90 = 90th percentile.
+corpus: 97 recipes; 27 take cooked rice and pull in a rice sub-recipe
+meal floor (one cook, final hands-on blocks in turn): med 6 p90 13
+
+## batch (3-5 dishes, to the fridge), 4 burners, 1 pan  (300 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 58/68                    | 63.1          | 45.3/131.1                    | 0                | 16% of sessions            | 0/0                  | 0/0                | 0
+evey, even spread          | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, oracle spread        | 0/6.3                    | 0             | 3.7/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no buzz rule         | 0/5.3                    | 0             | 13.1/38.1                     | 0                | 29% of sessions            | 0/0                  | 0/0                | 0
+evey, latest-start hold    | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, backward plan        | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, backward, replan     | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, replan + pace        | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, prep then fire       | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no hold              | 0/5.5                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no prep-first rule   | 0/5.7                    | 0.1           | 8.4/39.6                      | 17.8             | 26% of sessions            | 0/0                  | 0/0                | 0
+
+## batch (3-5 dishes, to the fridge), 4 burners, 2 pans  (300 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 58.9/68                  | 63.2          | 45.3/131.1                    | 0                | 17% of sessions            | 0/0                  | 0/0                | 0
+evey, even spread          | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, oracle spread        | 0/6.3                    | 0             | 3.7/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no buzz rule         | 0/5                      | 0             | 13.5/38.1                     | 0                | 30% of sessions            | 0/0                  | 0/0                | 0
+evey, latest-start hold    | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, backward plan        | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, backward, replan     | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, replan + pace        | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, prep then fire       | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no hold              | 0/5.3                    | 0.1           | 7.8/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no prep-first rule   | 0/4.9                    | 0.1           | 8.4/39.8                      | 18.3             | 25% of sessions            | 0/0                  | 0/0                | 0
+
+## batch (3-5 dishes, to the fridge), 2 burners, 1 pan  (300 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 58/68                    | 63.1          | 45.3/131.1                    | 0                | 16% of sessions            | 0/0                  | 0/0                | 0
+evey, even spread          | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, oracle spread        | 0/5.6                    | 0             | 3.7/38.8                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no buzz rule         | 0/5.3                    | 0             | 13.1/38.1                     | 0                | 30% of sessions            | 0/0                  | 0/0                | 0
+evey, latest-start hold    | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, backward plan        | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, backward, replan     | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, replan + pace        | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, prep then fire       | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no hold              | 0/5.3                    | 0.1           | 7.7/39.6                      | 0                | 27% of sessions            | 0/0                  | 0/0                | 0
+evey, no prep-first rule   | 0/5.5                    | 0.1           | 8.4/39.6                      | 17.8             | 26% of sessions            | 0/0                  | 0/0                | 0
+
+## batch (3-5 dishes, to the fridge), 1 burner, 1 pan (contrast)  (300 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 52.6/68                  | 61.4          | 40.3/117.3                    | 0                | 9% of sessions             | 0/0                  | 0/0                | 0
+evey, even spread          | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, oracle spread        | 0.2/8.2                  | 0.3           | 4.2/39                        | 0                | 18% of sessions            | 0/0                  | 0/0                | 0
+evey, no buzz rule         | 0/8.7                    | 0             | 10.9/33.6                     | 0                | 18% of sessions            | 0/0                  | 0/0                | 0
+evey, latest-start hold    | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, backward plan        | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, backward, replan     | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, replan + pace        | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, prep then fire       | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, no hold              | 0.6/8.7                  | 0.6           | 6/32.7                        | 0                | 19% of sessions            | 0/0                  | 0/0                | 0
+evey, no prep-first rule   | 0.8/9.6                  | 0.8           | 6/32.7                        | 16.5             | 17% of sessions            | 0/0                  | 0/0                | 37
+
+## meal (2-3 dishes, eaten now), 4 burners, 1 pan  (200 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 32.5/68                  | 57.8          | 11.5/76.2                     | 0                | 12% of sessions            | 79.6/131.4           | 75.5/119.2         | 0
+evey, even spread          | 1.6/13.4                 | 4             | 1.1/31.8                      | 0                | 11% of sessions            | 21.7/45.6            | 15.1/33.6          | 0
+evey, oracle spread        | 1.4/13.2                 | 4.2           | 0/31.8                        | 0                | 8% of sessions             | 21.2/44.2            | 15.8/34.7          | 0
+evey, no buzz rule         | 0.5/12.7                 | 3.5           | 4.1/18.7                      | 0                | 12% of sessions            | 20.9/43.1            | 14.7/32.4          | 0
+evey, latest-start hold    | 12.5/30.9                | 19.5          | 0/21.4                        | 0                | 21% of sessions            | 18.2/44              | 11.6/31.8          | 0
+evey, backward plan        | 4/19.9                   | 7             | 0/21.7                        | 0                | 14% of sessions            | 23.1/41.1            | 16/32.6            | 0
+evey, backward, replan     | 3.9/25.1                 | 11.1          | 0/13.9                        | 0                | 6% of sessions             | 26.3/49.8            | 17.4/40            | 0
+evey, replan + pace        | 9.4/35.8                 | 19.4          | 0/13.4                        | 0                | 7% of sessions             | 25.3/53.6            | 17.3/43.4          | 0
+evey, prep then fire       | 2.8/18.4                 | 6.9           | 0.3/21.4                      | 0                | 14% of sessions            | 18.1/38.8            | 11.1/28.4          | 0
+evey, no hold              | 1.8/13.1                 | 3.1           | 1.5/33.6                      | 0                | 15% of sessions            | 29.7/61.6            | 22.1/52.3          | 0
+evey, no prep-first rule   | 1.1/12                   | 3.9           | 1.1/31.8                      | 8.5              | 10% of sessions            | 21.1/45.6            | 15.1/34.2          | 0
+
+## meal (2-3 dishes, eaten now), 4 burners, 2 pans  (200 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 32.5/68                  | 57.8          | 13.3/76.2                     | 0                | 12% of sessions            | 79.6/131.4           | 75.5/119.2         | 0
+evey, even spread          | 1.4/12.7                 | 4             | 1.6/31.8                      | 0                | 12% of sessions            | 21.7/45.6            | 15.1/33.6          | 0
+evey, oracle spread        | 1.4/13.2                 | 4.2           | 0.1/31.8                      | 0                | 9% of sessions             | 21.2/44.2            | 15.6/34.7          | 0
+evey, no buzz rule         | 0.5/12.4                 | 3.6           | 4.4/18.7                      | 0                | 13% of sessions            | 20.6/43.1            | 14.5/32.4          | 0
+evey, latest-start hold    | 12.1/31.4                | 18.1          | 0.8/21.4                      | 0                | 22% of sessions            | 17.8/44              | 11.1/31.8          | 0
+evey, backward plan        | 4.2/19.7                 | 7             | 0/21.7                        | 0                | 15% of sessions            | 23.2/41.1            | 16.7/32.6          | 0
+evey, backward, replan     | 4/25.1                   | 11.8          | 0/13.9                        | 0                | 8% of sessions             | 26.6/48.3            | 17.5/39.6          | 0
+evey, replan + pace        | 10/35.2                  | 20.4          | 0/13.4                        | 0                | 8% of sessions             | 26.6/53.3            | 17.5/41.3          | 0
+evey, prep then fire       | 2.8/18.4                 | 6.2           | 0.9/21.4                      | 0                | 15% of sessions            | 18/38.8              | 11/28.4            | 0
+evey, no hold              | 1.8/13.1                 | 3.1           | 1.6/33.6                      | 0                | 16% of sessions            | 29.7/61.6            | 22.1/52.3          | 0
+evey, no prep-first rule   | 1.1/11.7                 | 3.9           | 2/31.8                        | 8.6              | 10% of sessions            | 21.1/45.6            | 15.1/34.2          | 0
+
+## meal (2-3 dishes, eaten now), 2 burners, 1 pan  (200 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 32.5/68                  | 57.8          | 11.5/76.2                     | 0                | 11% of sessions            | 79.6/131.4           | 75.5/119.2         | 0
+evey, even spread          | 1.6/13.4                 | 4             | 1.1/31.8                      | 0                | 11% of sessions            | 21.7/45.6            | 15.1/33.6          | 0
+evey, oracle spread        | 1.4/13.2                 | 4.9           | 0/31.8                        | 0                | 8% of sessions             | 21.2/44.2            | 15.8/34.7          | 0
+evey, no buzz rule         | 0.5/12.7                 | 3.6           | 4.1/18.7                      | 0                | 12% of sessions            | 20.9/43.1            | 14.7/32.4          | 0
+evey, latest-start hold    | 12.5/30.9                | 19.7          | 0/21.4                        | 0                | 21% of sessions            | 18.2/44              | 11.6/31.8          | 0
+evey, backward plan        | 4.2/19.9                 | 7.6           | 0/21.7                        | 0                | 14% of sessions            | 23.1/41.1            | 16/32.6            | 0
+evey, backward, replan     | 3.9/25.1                 | 11.1          | 0/13.9                        | 0                | 6% of sessions             | 26.3/49.8            | 17.4/40            | 0
+evey, replan + pace        | 9.4/35.8                 | 19.4          | 0/13.4                        | 0                | 7% of sessions             | 25.3/53.6            | 17.3/43.4          | 0
+evey, prep then fire       | 2.9/18.4                 | 6.9           | 0.3/21.4                      | 0                | 14% of sessions            | 18.1/38.8            | 11.1/28.4          | 0
+evey, no hold              | 1.8/13.1                 | 3.1           | 1.5/33.6                      | 0                | 15% of sessions            | 29.7/61.6            | 22.1/52.3          | 0
+evey, no prep-first rule   | 1.1/12                   | 3.9           | 1.1/31.8                      | 6.8              | 9% of sessions             | 21.1/45.6            | 15.1/34.2          | 0
+
+## meal (2-3 dishes, eaten now), 1 burner, 1 pan (contrast)  (200 sessions)
+policy                     | over lower bound med/p90 | cook idle med | food waits after buzz p90/max | on-heat gaps p90 | buzz during hands-on timer | hot dish waits med/p90 | over floor med/p90 | stuck
+greedy (device-ui)         | 31.4/68                  | 56.9          | 7.2/59.8                      | 0                | 6% of sessions             | 78.6/131.4           | 73.2/119.2         | 0
+evey, even spread          | 2/13.9                   | 5.1           | 0/33.6                        | 0                | 7% of sessions             | 22/46.2              | 15.5/34.5          | 0
+evey, oracle spread        | 2/15.1                   | 6             | 0/31.8                        | 0                | 7% of sessions             | 21.1/44.2            | 16.2/34.7          | 0
+evey, no buzz rule         | 0.9/13.9                 | 4.9           | 3.7/31.8                      | 0                | 6% of sessions             | 20.9/43.3            | 15/32.4            | 0
+evey, latest-start hold    | 14/35.2                  | 20.8          | 0/9                           | 0                | 16% of sessions            | 19.8/44.5            | 13/31.8            | 0
+evey, backward plan        | 4.3/20.8                 | 9.6           | 0/14.2                        | 0                | 10% of sessions            | 22.9/41.5            | 15.9/33.1          | 0
+evey, backward, replan     | 4.7/22.9                 | 10.5          | 0/14.2                        | 0                | 5% of sessions             | 26.8/52.8            | 19.2/42            | 0
+evey, replan + pace        | 9.1/34.6                 | 18            | 0/14.2                        | 0                | 3% of sessions             | 25/54.5              | 18/43.2            | 0
+evey, prep then fire       | 3.2/19.4                 | 9.5           | 0/31.8                        | 0                | 10% of sessions            | 18.9/39.5            | 11.6/29.2          | 0
+evey, no hold              | 2.1/13.9                 | 4.8           | 0.7/33.6                      | 0                | 11% of sessions            | 29.7/61.6            | 20.5/52.3          | 0
+evey, no prep-first rule   | 1.4/13.5                 | 5.1           | 0/25.9                        | 4.3              | 7% of sessions             | 20.6/44.6            | 15.1/34.5          | 17
+
+spread: |even - weighted| per untimed step med 1.6 p90 3 min; 2 recipes have hands-on minutes below 1 min per untimed step once hands-on timers are taken out
+scaling: 39 recipes have a hands-on pan or fryer timer; at x3, 31 of them put more than one round's worth in (assumed 500 g pan, 300 g fryer)
+chains: 63 steps hand their vessel on to the next step (held equipment)
+rounds: x3 batch sessions take med 12 p90 52 min longer when fry steps repeat per round (224 of 300 sessions affected)
