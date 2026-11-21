@@ -235,6 +235,19 @@ Takeaways:
 - Leads seen in primary sources but not researched: Seeed "Sticky: 3.97'' Monochrome ePaper Display" [seeed-e1003-shop]; Seeed "OpenDisplay 4.26" & 7.3" DIY Kit" [seeed-matrix]; TRMNL firmware targets `xteink_x4`, `xteink_x3`, `zectrix_note4`, and `trmnl_gen2` on an ESP32-C5 board [trmnl-pio].
 - Pages that failed to load: soldered.com collection JSON (HTTP 429); eu.robotshop.com (403); shop.trmnl.com shipping policy (404); Seeed EE05 product page (429, not retried); RS and buyepaper.com (Cloudflare challenge in saved copies). EU reseller pages for PaperS3 and LilyGo were seen only as search snippets.
 
+## Re-check, 2026-11-21
+
+The load-bearing rows were re-read against their sources when [Panel size and hardware platform](https://github.com/gariasf/evey/issues/15) was decided. The rows above keep their 2026-11-20 values; this list records what held and what changed.
+
+- **Held:** E1001 panel GDEY075T7 / UC8179; Good Display's 0.3 s partial; GxEPD2's 1200 / 450 ms; 2000 mAh; keys on GPIO 3/4/5, buzzer on 45; PCF8563 with CR1220; "~14 µA" (stated for the whole series); E1003 at Antratek €192.39, in stock; Seeed_GFX2 is MIT and lists the E1001 to E1004 with partial refresh.
+- **E1001 stock:** Antratek still out of stock. [BerryBase](https://www.berrybase.de/seeed-reterminal-e1001-monochromes-epaper-display-7-5-zoll-hmi-800x480-esp32-s3-home-assistant) lists it at €99.90 including German VAT, 91 in stock; shipping to Spain unverified.
+- **Seeed direct:** from the China warehouse orders ship DAP, so VAT and fees are paid on delivery and Spain is not on the DDP list ([Seeed support](https://support.seeed.cc/portal/en/kb/articles/customs-duties-and-taxes)). Whether the E1001 is stocked in Seeed's German warehouse is unverified.
+- **E1003:** still no published partial refresh time. Keys and buzzer share the E1001's pins; the battery-enable pin differs (IO40 against GPIO 21) ([peripherals wiki](https://wiki.seeedstudio.com/reterminal_e10xx_with_arduino_peripherals/)).
+- **E1001 mounting:** no magnetic or wall-mount accessory, official or third-party, was found.
+- **TRMNL X:** the spec sheet now gives refresh as "200ms - 1.3s" without a full/partial split. The latest progress entry (2026-11-19) says both warehouses await new PCBs, with no restock date ([progress](https://trmnl.com/blog/model-x-progress)). The shop refused automated reads, so price is unverified.
+- **Inkplate 10:** soldered.com refused automated reads. Current docs give only "1.61s (full), supports partial updates" ([docs](https://docs.soldered.com/inkplate/10/overview/)); the 0.62 s figure was found only in 2021 launch coverage. A reseller lists the cased SKU as EOL ([Welectron](https://welectron.com/Soldered-333242-Inkplate-10-97-e-paper-board-with-enclosure)).
+- **New boards:** none at 7.5″ or more with keys, buzzer, battery and case since 2026-11-20 (quick check of Seeed, Soldered, M5Stack and TRMNL firmware targets).
+
 ## Sources
 
 All loaded 2026-11-20. Some were read from raw copies saved earlier the same day.

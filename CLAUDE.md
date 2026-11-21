@@ -51,7 +51,9 @@ Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/a
 
 ## Stack
 
-Not decided yet. The Foundations and ladder map (#2) decides the terminal's hardware platform, the server and the data store, each as an ADR. Until then, no dependency is added.
+Not decided yet. The Foundations and ladder map (#2) decides the server stack and the data store, each as an ADR. Until then, no dependency is added.
+
+The terminal is a Seeed reTerminal E1001 running our own MIT firmware on Seeed_GFX2; the 10.3″ E1003 is the upgrade path (ADR 0005).
 
 The backoffice is built, not adopted; other recipe tools lend ideas, never AGPL code (ADR 0003).
 
