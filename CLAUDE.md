@@ -59,6 +59,8 @@ The terminal is a Seeed reTerminal E1001 running our own MIT firmware on Seeed_G
 
 The backoffice is built, not adopted; other recipe tools lend ideas, never AGPL code (ADR 0003).
 
+A recipe is one document: a step tree with stable ids, its source part and its labelled additions kept apart (ADR 0006).
+
 The server runs at home as one Linux container; the phone reaches it away from home over Tailscale, never the public internet (ADR 0004).
 
 The private store is one SQLite file on the server's data volume, the server its only writer, backed up nightly as a text dump to a private repo; recipes change only through import with review (ADR 0008).
@@ -75,7 +77,7 @@ The repo is public under MIT. Recipe content and the owner's data stay out of it
 
 ## Domain rules (carried over from japanese-batch-kitchen)
 
-- **Recipes.** Quantities and methods are the source author's: transcribe, don't improve. This project's additions are labelled as such: batch ratings, keep times, shop routing, local shelf names, air-fryer notes and session ordering.
+- **Recipes.** Quantities and methods are the source author's: transcribe, don't improve. This project's additions are labelled as such: batch ratings, keep times, air-fryer notes and session ordering on recipes; shop routing and local shelf names on ingredients.
 - **Diet rules are data.** The owner's diet excludes shellfish, and surimi counts as shellfish. A recipe that breaks a diet rule is dropped or adapted, and the adaptation is labelled.
 - **Credit and link, don't copy.** Every recipe links to its source. No copied video stills, thumbnails or audio.
 - **Units and language.** Metric units. English UI with local shelf names.

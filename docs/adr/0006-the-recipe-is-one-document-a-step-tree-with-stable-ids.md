@@ -1,0 +1,41 @@
+# A recipe is one document: a step tree with stable ids
+
+Each recipe is one self-contained document, checked against a schema. It holds the source's transcription and this project's labelled additions as two separate parts, and its steps form a tree. Every step has one output and a stable id, and every ingredient line and step output is used exactly once. The owner decided this on 2026-11-21 in [Recipe data model](https://github.com/gariasf/evey/issues/16). The inputs were [`software-prior-art.md`](../research/software-prior-art.md) (own JSON with stable step ids; schema suggestions drawn from recipe flow graphs and MILK) and [`ux-cooking-research.md`](../research/ux-cooking-research.md) (quantities inline, one main action per step, done-cues), measured against japanese-batch-kitchen's 97 recipes.
+
+The process grid ([ADR 0002](0002-terminal-concept-card-led-step-screen-on-three-keys.md)) and the conductor both read the step-to-step links, and every field is filled once for every recipe, imported ones included. So the model keeps the tree, records what the conductor needs on the step, and makes every field beyond the transcription optional, with a safe default.
+
+## Considered options
+
+- **A graph: portions on inputs, or steps with two outputs.** Recipe flow graphs and MILK's `separate` allow this. In the corpus about 3 of 558 steps are physical splits, and a graph breaks the process grid's layout. The split stays in the step's text. Revisit if import brings in recipes that split often.
+- **Positional step references** (japanese-batch-kitchen's `"s3"` and ingredient indices). Inserting a step renumbers the rest, which breaks a session in progress, a leftover's pointer back to its recipe, and any annotation.
+- **Sub-recipes spliced into the parent's tree.** No recipe in the corpus needs this, and it makes the tree and the grid harder to draw.
+- **Cooklang as the stored format.** It cannot reference a step's output. It stays an export format at most.
+
+## Decisions
+
+- **Ids.** Each recipe has an opaque id that never changes, plus a source reference (series, day, video link as credit). Each step and each ingredient line has an id that is unique within its recipe, assigned at creation, and never renumbered or reused. Display order is a separate list.
+- **Tree.** Exactly one root, the finished dish. No cycles and no references to later steps. Every ingredient line and every step output is used exactly once.
+- **Steps with no food input.** Preheating and boiling water are allowed as leaf steps that name only equipment and feed the step that uses it. The conductor can bring them forward as "start this now".
+- **One main action per step.** A source step may be split in several when each part keeps the source's words in the source's order, with no words added, and each quantity moves with the words that use it. That is transcription, so it is not labelled. Rewording, reordering and merging steps stay forbidden. Splitting is optional: an unsplit recipe still cooks.
+- **Hands-on or walk-away comes from the timer.** A step with no timer is hands-on. A timer has a duration, possibly a range, and an attention mark: walk-away by default, hands-on when the cook stays at it. For a range, the buzzer sounds at the low end and the timer strip shows the high end. A hands-on timer shows on its step; the timer strip lists walk-away steps only. The buzzer sounds for both.
+- **Durations for steps without a timer.** The recipe keeps its hands-on minutes as a labelled estimate, and the conductor spreads it over the untimed steps. An estimate on a single step is an optional override. japanese-batch-kitchen's passive minutes are dropped, because walk-away timers now carry them.
+- **Equipment.** Each step names the equipment it occupies, from a fixed list of kinds. Occupancy runs along a chain: a pan named by three steps in a row is held from the first step's start to the last step's end. Utensils, which no step occupies, are a list on the recipe. How much equipment the owner has is owner data ([ADR 0001](0001-the-repo-is-public-recipe-content-stays-out.md)).
+- **Done-cue.** An optional field holding the source's own words, moved out of the step's text and never invented.
+- **Sub-recipes are references.** An ingredient line may point to another recipe. The planner can add that recipe to the plan, where it cooks as a recipe of its own in the same session. Because the reference is on the line, a session can tell which of its recipes feed another; those make no leftover.
+- **Scaling.** Numeric quantities scale linearly with the batch multiplier. An ingredient line marked fixed does not scale, nor does a line with no quantity. Timers never scale.
+- **Units are transcribed.** tbsp and tsp are metric spoons (15 ml and 5 ml). Cups stay cups in the data, and the terminal shows millilitres beside them. Conversion to grams happens only for the shopping list.
+- **Source and additions are separate parts.** The labelling is in the structure, not in a flag on each value.
+  - The source part holds the dish's name (romaji and English), the source reference, the ingredient lines, the steps, and the source's notes.
+  - The additions part holds the dish category, the batch rating, the keep time (whole days plus an optional note; a recipe without one takes ADR 0007's leftover fallback for its eat-by date), a servings estimate, the hands-on minutes, an air-fryer note, a session ordering hint and the utensils.
+  - Servings are the source's when it states them, otherwise an optional estimate. Without them, a leftover counts as one dish.
+- **Adaptations.** A recipe that breaks a diet rule is stored already adapted, with an adaptation note saying what changed and which rule it keeps. The terminal labels it. The unadapted original is not kept: it cannot be cooked, and the source link covers it.
+- **Ingredients have two halves.** A line names an ingredient by key, and one key may appear on several lines. The identity half (key, English name, unit conversions such as cooked to raw rice) belongs to this model. The shelf name, shop routing, staple flag and shelf life are owner data in the private store, with their meaning set by [Pantry and leftovers: what evey knows without asking for discipline](https://github.com/gariasf/evey/issues/17).
+- **Validation and versions.** Every save and every import is checked: the tree rules above, ingredient keys and equipment kinds that exist, and unique ids. An invalid recipe is rejected with the reason. Each document carries a schema version, and migrations run when a document is loaded.
+
+## Consequences
+
+- **The field schema lands in code at M0**, tested against fixture recipes. This ADR records the decisions, not the field list.
+- **japanese-batch-kitchen converts once at M0** through a JBK-format importer in this repo, tested on a fixture recipe written in that format and run against the private corpus. It infers each step's equipment from keywords and the recipe's equipment list, and each timer's attention mark (walk-away, or hands-on for frying). It flags recipes whose passive minutes disagree with their timers. Done-cues and step splits are left in the step text, to be done where cooking shows they're needed. The agent checks the inferred equipment against the process grid; the owner reviews nothing.
+- **[The conductor within equipment limits](https://github.com/gariasf/evey/issues/23)** tests equipment chains, the attention mark and the spread of hands-on minutes over untimed steps. It may amend this model before M0 converts the corpus.
+- **[ADR 0008](0008-the-private-store-is-one-sqlite-file-backed-up-to-a-private-repo.md) keeps the corpus in the SQLite private store.** A recipe arrives, and is replaced, whole: one document in this shape, through import with review. The ingredient's owner half sits beside the rest of the owner's data.
+- **Import with review, and any later recipe editor** ([ADR 0003](0003-the-backoffice-is-built-not-adopted.md)), apply the same validation rules.
