@@ -51,7 +51,9 @@ Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/a
 
 ## Stack
 
-The server stack is not decided yet; the Foundations and ladder map (#2) decides it as an ADR. Until then, no dependency is added.
+The server is TypeScript run directly by Node 24 (erasable syntax only), with Hono and server-rendered pages for the backoffice. Frames come from a long-lived headless Chromium with fontconfig anti-aliasing off, so they are only right in the Linux image. The image serves development, `npm run verify` and the host. The dependencies are the ones ADR 0009 lists; adding one is a roadmap decision (ADR 0009).
+
+Layout, created in M0: `server/` (TypeScript), `firmware/` (the terminal's C++), `fixtures/` (fixture recipes and golden PNGs), with `package.json` and `Dockerfile` at the root.
 
 The terminal is a Seeed reTerminal E1001 running our own MIT firmware on Seeed_GFX2; the 10.3″ E1003 is the upgrade path (ADR 0005).
 
