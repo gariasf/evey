@@ -79,6 +79,7 @@ The repo is public under MIT. Recipe content and the owner's data stay out of it
 - **Diet rules are data.** The owner's diet excludes shellfish, and surimi counts as shellfish. A recipe that breaks a diet rule is dropped or adapted, and the adaptation is labelled.
 - **Credit and link, don't copy.** Every recipe links to its source. No copied video stills, thumbnails or audio.
 - **Units and language.** Metric units. English UI with local shelf names.
+- **Pantry and leftovers.** On hand or not, never counted; anything an unpressed input would leave wrong ages out on its own (ADR 0007).
 
 ## How agents work here
 
