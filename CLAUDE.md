@@ -51,7 +51,7 @@ Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/a
 
 ## Stack
 
-Not decided yet. The Foundations and ladder map (#2) decides the server stack and the data store, each as an ADR. Until then, no dependency is added.
+The server stack is not decided yet; the Foundations and ladder map (#2) decides it as an ADR. Until then, no dependency is added.
 
 The terminal is a Seeed reTerminal E1001 running our own MIT firmware on Seeed_GFX2; the 10.3″ E1003 is the upgrade path (ADR 0005).
 
@@ -59,12 +59,14 @@ The backoffice is built, not adopted; other recipe tools lend ideas, never AGPL 
 
 The server runs at home as one Linux container; the phone reaches it away from home over Tailscale, never the public internet (ADR 0004).
 
+The private store is one SQLite file on the server's data volume, the server its only writer, backed up nightly as a text dump to a private repo; recipes change only through import with review (ADR 0008).
+
 ## Public code, private data
 
 The repo is public under MIT. Recipe content and the owner's data stay out of it (ADR 0001).
 
 - **Never commit recipe content.** That means ingredients, quantities, steps and notes, from any source.
-  - It lives in the private corpus and is loaded at runtime.
+  - It lives in the private store and is loaded at runtime.
   - Tests, examples and PR images use invented fixture recipes.
 - **Never commit the owner's data.** That covers kitchen equipment, shops, pantry, leftovers and plans. The conductor and the shopping list read these as data from the private store.
 - **Nothing private on any branch, issue or PR.** That covers secrets and tokens, and also personal details.
