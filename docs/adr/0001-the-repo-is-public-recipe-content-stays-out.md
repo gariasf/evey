@@ -17,7 +17,7 @@ The owner made both decisions on 2026-11-20, before the repo was created.
   - Tests, examples and PR images use invented fixture recipes.
   - A screenshot of a real recipe stays local.
 - **The prototype branch ignores its generated data.** Each checkout regenerates `data.js` and its renders from the private corpus.
-- **Still to decide:** where the private corpus lives, and how a fresh checkout or the server gets it. The Foundations and ladder map decides this.
+- **Decided later:** where the private corpus lives, and how a fresh checkout or the server gets it, in [ADR 0008](0008-the-private-store-is-one-sqlite-file-backed-up-to-a-private-repo.md).
 - **Nothing private on any branch, issue or PR.** That covers secrets and tokens, and also personal data.
 - **Licences of others' code are respected.**
   - Adapted code cites its source and licence.

@@ -35,7 +35,8 @@ An invented recipe that stands in for the corpus in tests, examples and screensh
 _Avoid_: sample recipe, dummy recipe
 
 **Private store**:
-Where the corpus and the owner's data live, outside the public repo.
+Where the corpus and the owner's data live, outside the public repo: the server's database and its off-machine backup.
+_Avoid_: private corpus, private repo
 
 **Step**:
 One instruction in a recipe. Its inputs are ingredients and the results of earlier steps.
