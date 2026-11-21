@@ -77,7 +77,7 @@ The repo is public under MIT. Recipe content and the owner's data stay out of it
 
 ## Domain rules (carried over from japanese-batch-kitchen)
 
-- **Recipes.** Quantities and methods are the source author's: transcribe, don't improve. This project's additions are labelled as such: batch ratings, keep times, shop routing, local shelf names, air-fryer notes and session ordering.
+- **Recipes.** Quantities and methods are the source author's: transcribe, don't improve. This project's additions are labelled as such: batch ratings, keep times, air-fryer notes and session ordering on recipes; shop routing and local shelf names on ingredients.
 - **Diet rules are data.** The owner's diet excludes shellfish, and surimi counts as shellfish. A recipe that breaks a diet rule is dropped or adapted, and the adaptation is labelled.
 - **Credit and link, don't copy.** Every recipe links to its source. No copied video stills, thumbnails or audio.
 - **Units and language.** Metric units. English UI with local shelf names.
